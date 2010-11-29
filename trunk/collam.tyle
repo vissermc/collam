@@ -1,0 +1,464 @@
+https://collam.googlecode.com/svn/trunk/
+/*
+conclusion
+||<-+
+||  |<-+
+||  |  |
+||  |  metaMetaProp
+||  metaProp
+||because
+|+--prop  
+|but
++--or
+   ||
+   |+-
+   |
+   +-
+
+*/
+
+
+// user<-usees, conclusion<-argument
+
+curTracker; // ==() for latest state.
+
+[Filter={isTracked,...}];
+[User={[Filter=>]filters}];
+[Change={who,when,isPrivateEdit}];
+[TrackedObjectState={isDeleted,[Change]change,data}];
+[TrackedObjectStates=User=>TrackedObjectState];
+[Connection={[TrackedObjectStates]states, [Item]usee, [Item]user, [Connection=>]metaConnections}];
+[Item={[{new,calcProbability,calcResult,type,getTagText,getText,getColor,hasArrowPoint,serialize}]class,id,[TrackedObjectStates]states,[Item=>Connection]usees,[Item=>Connection]users}];
+[ConnData={probability}];
+[PropData={text,probability}];
+[Project={[=>User]users,[=>Item]items,nextID}];
+[=>Project]projects;
+[TrackedObjectState]indexStates=?(&$[{:curTracker}@$?curTracker]);
+publishState=?<[TrackedObjectStates]>
+(	$[()]=$[curTracker];
+	$.change.isPrivateEdit=0;
+);
+
+serializeObjectStates=?<[TrackedObjectStates]>
+(	$%!{$.key.id,$.data.!{$.isDeleted,$.change.!{$.who.id,$.when,$.isPrivateEdit},$.data}}
+);
+serializeUser=?<[User]> ($);
+
+isItemValid=?<[Item]item>(indexStates(item.states).isDeleted==0);
+isConnectionValid=?<[Connection]connection>(indexStates(connection.states).isDeleted==0);
+getData=?<[Item]item> (	&indexStates(&item.states).data );
+[ConnData]getConnData=?<[Connection]conn> ( &indexStates(&conn.states).data );
+[PropData]getPropData=getData;
+getChangeData=?{curTracker,dateTime!,1};
+prepareEdit=?<[Item]item>
+(	{:curTracker}@item.states ?:
+	(	item.states[curTracker]=item.states[()];
+	);
+	item.states[curTracker].change=getChangeData();
+);
+[Item=>Connection]getValidUsees=?<[Item]item>
+(	.r={:}; item.usees %! (isConnectionValid($.data) ? (r[$.key]=$.data;);); r
+);
+[Item=>Connection]getValidUsers=?<[Item]item>
+(	.r={:}; item.users %! (isConnectionValid($.data) ? (r[$.key]=$.data;);); r
+);
+
+calcConnectionProbability=?<[Connection]c>
+(
+	.p=getConnData(c).probability;
+	(p<0?1:0)+(p*$.usee->calcProbability())
+);
+calcConnectionColor=?<[Connection]c>
+(
+	.p=getConnData(c).probability;
+	.cp=calcConnectionProbability(c);
+	getCSSColor(p<0?1-cp:cp,p<0?{1,0,0}:{0,1,0})
+);
+getConnectionText = ?<[Connection]c>
+(	c.user.class==propositionClass?getConnData(c).probability>=0?'supports':'challenges'
+);
+
+&[Item.class]itemClass.!
+(
+	*$={};
+	$.new = ?<class,data> registerItem(&{&class,0,{:()=>{0,(),data}},{:},{:}});
+	$.serialize=? <className><[Item]this>
+	(
+		{	className,
+			this.id,
+			serializeObjectStates(this.states),
+			this.usees%!{$.key.id,serializeConnection($.data)} //serializeObjectStates
+		}
+	);
+	$.calcProbability = ? <><[Item]this>
+	(	.m=1.0;
+		getValidUsees(this):!(m*=calcConnectionProbability!;);
+		m
+	);
+	$.calcResult = ? <><[Item]this> ( this->calcProbability() );
+	$.getColor =? <><[Item]this>
+	(
+		getCSSColor(this->calcProbability(),{0,1,1})
+	);
+	$.hasArrowPoint = 0;
+	$.getTagText=?<prop><[Item]this>
+	(	''{'&#x2116;&nbsp;',this.id,'&nbsp;&nbsp;P&nbsp;',prop.!$==1.0?1:$}
+	);
+);
+
+&[Item.class]orClass.!
+(
+	*$=itemClass;
+	$.new = ?itemClass.new(orClass,());
+	$.calcProbability = ? <><[Item]this>
+	(	.m=1.0;
+		getValidUsees(this):!(m*=1.0-calcConnectionProbability!;);
+		1.0-m
+	);
+	$.type = 'or';
+	$.getText = ? 'Or';
+);
+
+&[Item.class]andClass.!
+(
+	*$=itemClass;
+	$.new = ?itemClass.new(andClass,());
+	$.type = 'and';
+	$.getText = ? 'And';
+);
+/*
+&[Item.class]notClass.!
+(
+	*$=itemClass;
+	$.new = ?itemClass.new(notClass,());
+	$.calcProbability = ? <><[Item]this>
+	(	.m=1.0;
+		getValidUsees(this):!(m*=$->calcResult(););
+		getValidUsees(this):!(m*=1.0-$->calcResult(););
+		1.0-m
+	);
+	$.type = 'not';
+	$.getText = ? 'Not';
+);
+*/
+connectItems=?<[Item]usee,[Item]user, strength>
+(
+	putline('Connecting '+usee.id+'->'+user.id);
+	.hasLoop=findPropsInArguments(usee,gatherConclusions(user,1),1);
+	!hasLoop ?
+	(	[Connection].c;
+		{:user}@usee.users?
+		(	c=usee.users[user];
+		):
+		(	c=&{{:},usee,user,{:}};
+			usee.users[user]=c;
+			user.usees[usee]=c;
+		)
+		c.states[curTracker]={0,getChangeData(),strength};			
+		//[Connection].c=&{{curTracker=>{0,getChangeData(),strength}},usee,user,{:}};
+		//todo: this should not happen, why was it in the code? {:usee}@user.usees?:(user.usees[usee]=c;);
+	);
+);
+hier ben ik
+disconnectItems=?<[Item]usee,[Item]user>
+(
+	putline('Disconnecting '+usee.id+'->'+user.id);
+	usee.users:-=user;
+	user.usees[usee][curTracker]={1,getChangeData()};
+	!sum(user.usees[usee]%! !$.data.isDeleted ) ?
+	(	user.usees:-=usee;
+	);
+);
+disconnectUsees=?<[Item]item>
+(
+	getValidUsees(item):!disconnectItems($,item);
+);
+disconnectUsers=?<[Item]item>
+(
+	getValidUsers(item):!disconnectItems(item,$);
+);
+
+nextID;
+getNewId=? (.n=nextID; nextID+=1; n);
+registerItem=?<[Item]item> ( item.id=getNewId!; items+={:item.id=>item};item);
+
+removeItem=?<[Item]item>
+(
+	item.users:!disconnectItems(item,$);
+	items:-=item;
+);
+
+&[Item.class]propositionClass.!
+(
+	*$=itemClass;
+	$.new = ? <text> itemClass.new(propositionClass,{text,1.0});
+	$.calcProbability = ? <><[Item]this>
+	(	getPropData(this).probability * (this.!itemClass.calcProbability())
+	);
+	$.getText = ? <><[Item]this>
+	(	getPropData(this).text
+	);
+	$.getTagText=?<prop><[Item]this>
+	(	.p=getPropData(this).probability;
+		(this.!itemClass.getTagText(prop))+(p!=prop ? '&nbsp;('+p+')')
+	);
+	$.type = 'prop';
+	$.serialize=? <><[Item]this>
+	(
+		(this.!itemClass.serialize())+{getPropData(this).text,getPropData(this).probability}
+	);
+);
+/*
+&[Item.class]reasonClass.!
+(
+	*$=itemClass;
+	$.new = ? <isSupportive> itemClass.new(reasonClass,{isSupportive});
+	$.calcResult =  ? <><[Item]this>
+	(	.p=this->calcProbability();
+		getReasonData(this).isSupportive ? p : (this.usees ? 1.0-p : 1.0)
+	);
+	$.getText = ? <><[Item]this>
+	(	getReasonData(this).isSupportive?'supports':'challenges'
+	);
+	$.getColor =? <><[Item]this>
+	(
+		getCSSColor(this->calcProbability(),getReasonData(this).isSupportive?{0,1,0}:{1,0,0})
+	);
+	$.hasArrowPoint = 1;
+	$.type = 'reason';
+	$.serialize=? <><[Item]this>
+	(
+		(this.!itemClass.serialize())+{getReasonData(this)}
+	);
+);
+*/
+unserialize=?
+(	eval(format('[<>Class]$',{$[0]}))!.unserialize()
+);
+
+iterateUsers=? <func, includeSelf><[Item]item>
+(	!includeSelf || func(item) ? (
+		.continue=1;
+		getValidUsers(item):!
+		( continue&&=iterateUsers(func,1);
+		);
+		continue
+	)
+);
+
+iterateUsees=? <func, includeSelf><[Item]item>
+(	!includeSelf || func(item) ? (
+		.continue=1;
+		getValidUsees(item):!
+		( continue&&=iterateUsees(func,1);
+		);
+		continue
+	)
+);
+
+findPropsInArguments=?<[Item]root, [Proposition=>]findOneOfUs,includeSelf>
+(
+	.f= ? !($@findOneOfUs);
+	!(root.!iterateUsees(f,includeSelf))
+);
+
+findPropsInConclusions=?<[Item]root, [Proposition=>]findOneOfUs,includeSelf>
+(
+	.f= ? !($@findOneOfUs);
+	!(root.!iterateUsers(f,includeSelf))
+);
+
+gatherConclusions=?<[Item]root,includeSelf>
+(
+	s={:};
+	.f= ? (s:+=$;1);
+	root.!iterateUsers(f,includeSelf);
+	s
+);
+
+getItemJSONProps=?<[Item]i>
+{	.type=i->type; format('&type=<>&item=$<>',{type, i.id}), type, i->getText(),i->getTagText(i->calcProbability()),i->getColor()
+};
+
+urlTailForConnection=?<[Item]usee, [Item]user> (format('&type=connection&item=$<>&item2=$<>',{usee.id, user.id}));
+
+getJSONItemConclusionTree=?<[Item]item,level>
+(
+	.c=item->getColor();
+	.ap=item->hasArrowPoint;
+	(level ? item.users) :!
+	(
+		getItemJSONProps!+{ap|(@$.usees>1?4)|(level==1&&$.users?8),c,urlTailForConnection(item,$), getJSONItemConclusionTree($,level-1)}
+	)
+);
+
+getJSONItemArgumentTree=?<[Item]item,level>
+(
+	( level ? getValidUsees(item) ):!
+	(
+		.l=getItemJSONProps!;
+		l+{($->hasArrowPoint*2) | (@$.users>1?4)|(level==1&&getValidUsees($)?16), l[-1],urlTailForConnection($,item), getJSONItemArgumentTree($,level-1)}
+	)
+);
+
+getJSONTriple=?<[Item]center,level>
+(
+	.l=getItemJSONProps(center);
+	getJSONItemConclusionTree(center,level-1),
+	l+{(level==1&&getValidUsers(center)?8)|(level==1&&getValidUsees(center)?16)},
+	getJSONItemArgumentTree(center,level-1)
+);
+
+tyle2json = ? // todo:remove!!, check tyle
+''(
+	@@$==@@{} ? {'[',.r=$:!{tyle2json!,','}; r[-1]>>=1; r, ']'} :
+  @@$==@@{:} ? {'{',.r=$%!{.?(''($.key)),':',tyle2json($.data),','}; r[-1]>>=1; r, '}'}:
+	@@$==@@() ? 'null' :
+	(.?$)
+);
+collam_init=?
+(
+	putline('Initializing Collam...');
+	nextID=1;
+	items={:};
+	.p1=propositionClass.new('final conclusion');
+	.p2=propositionClass.new('center conclusion');
+	.p3=propositionClass.new('arg 1');
+	[Item].p4=propositionClass.new('arg 2');
+	getPropData(p4).probability=0.2;
+	.r1=reasonClass.new(1);
+	.r2=reasonClass.new(1);
+	.r3=reasonClass.new(0);
+	connectItems(r1,p1);
+	connectItems(p2,r1);
+	connectItems(r2,p2);
+	connectItems(p3,r2);
+	connectItems(r3,p2);
+	connectItems(p4,r3);
+	currentItem=p2;
+);
+(
+	.item;
+	.val;
+	.generateItemQuestion=?<action>( ?(val==()?{'Enter ID of reason.',''}:action(items[0(val)])) );
+	act=?<type,index,pItem,pItem2,pVal>
+	(	
+		[Item]item=items[pItem];
+		val = pVal;
+		//putline(.?{type,index,pItem,val,hash(&val),hash(&item)});
+		.r=menus[type][index].func!;
+		r
+	);
+	[=>:{text,flags,func}]menus=
+	{:
+		'prop'=>
+		{
+			{'position as root',0,?(currentItem=item;)},
+			{'set internal probability',0,?(val==()?{'Change internal probability between 0 and 1.0.',getPropData(item).probability}:(prepareEdit(item);getPropData(item).probability=0.0(val);))},
+			{'edit text',0,?(val==()?{'Change text of proposition.',item.text}:(prepareEdit(item);getPropData(item).text=val;))},
+			{'is argument in ...',0,generateItemQuestion(?connectItems(item,$))},
+			{'is argument in new support',0,?(connectItems(item,reasonClass.new(1)); )},
+			{'is argument in new challenge ',0,?(connectItems(item,reasonClass.new(0)); )},
+			{'add existing reason ...',0,generateItemQuestion(?connectItems($,item))},
+			{'add new support',0,?(connectItems(reasonClass.new(1),item); )},
+			{'add new challenge',0,?(connectItems(reasonClass.new(1),item); )},
+			{'delete',0,deleteFunc=?(prepareEdit(item);removeItem(item);) }
+		},
+		'reason'=>
+		{
+			{'position as root',0,?(currentItem=item;)},
+			{'attach to ...',0,generateItemQuestion(?(disconnectUsers(item);connectItems(item,$)))},
+			{'attach to new conclusion',0,attachNewConclusionFunc=?(val==()?{'Enter text of new proposition.',''}:(disconnectUsers(item);connectItems(item,propositionClass.new(val))))},
+			{'insert new argument',0,?(val==()?{'Enter text of new proposition.',''}:(connectItems(propositionClass.new(val),item)))},
+			{'insert or-operator',0,?connectItems(orClass.new(),item)},
+			{'insert not-operator',0,?connectItems(notClass.new(),item)},
+			{'insert existing ...',0,generateItemQuestion(?connectItems(item,$))},
+			{'delete',0,deleteFunc },
+			{'invert support vs. challenge',0,?(prepareEdit(item);&getReasonData(item).isSupportive.!(*$=!$;);)},
+			{'meta-reasoning',1},
+			{'attach to new support',0,?(disconnectUsers(item);connectItems(item,reasonClass.new(0)))},
+			{'attach to new challenge',0,?(disconnectUsers(item);connectItems(item,reasonClass.new(1)))},
+			{'insert new support',0,?connectItems(reasonClass.new(1),item)},
+			{'insert new challenge',0,?connectItems(reasonClass.new(1),item)},
+		},
+		'or'=>
+		{
+			{'attach to ...',0,generateItemQuestion(?(disconnectUsers(item);connectItems(item,$)))},
+			{'attach to new conclusion',0,attachNewConclusionFunc},
+			{'insert new proposition',0,?(val==()?{'Enter text of new proposition.',''}:(connectItems(propositionClass.new(val),item)))},
+			{'insert not-operator',0,?connectItems(notClass.new(),item)},
+			{'insert and-operator',0,?connectItems(andClass.new(),item)},
+			{'insert existing ...',0,generateItemQuestion(?connectItems(item,$))},
+			{'delete',0,deleteFunc }
+		},
+		'and'=>
+		{
+			{'attach to ...',0,generateItemQuestion(?(disconnectUsers(item);connectItems(item,$)))},
+			{'attach to new conclusion',0,attachNewConclusionFunc},
+			{'insert new proposition',0,?(val==()?{'Enter text of new proposition.',''}:(connectItems(propositionClass.new(val),item)))},
+			{'insert not-operator',0,?connectItems(notClass.new(),item)},
+			{'insert or-operator',0,?connectItems(orClass.new(),item)},
+			{'insert existing ...',generateItemQuestion(?connectItems(item,$))},
+			{'delete',0,deleteFunc }
+		},
+		'not'=>
+		{
+			{'attach to ...',0,generateItemQuestion(?(disconnectUsers(item);connectItems(item,$)))},
+			{'attach to new conclusion',0,attachNewConclusionFunc},
+			{'insert new proposition',0,?(val==()?{'Enter text of new proposition.',''}:(connectItems(propositionClass.new(val),item)))},
+			{'insert or-operator',0,?connectItems(orClass.new(),item)},
+			{'insert and-operator',0,?connectItems(andClass.new(),item)},
+			{'insert existing ...',generateItemQuestion(?connectItems(item,$))},
+			{'delete',0,deleteFunc }
+		},
+		'connection'=>
+		{	{'delete',0,?() }
+		}
+	};
+);
+
+/*
+OR-operator: a+b-a*b
+go to
+edit
+probability... (-> [0.3] in text)
+add:
+	because ...
+	but ...
+	... because
+	... but
+	comment
+attach to ...
+take ...
+delete
+== reason menu
+invert but/because
+attach to ... [this will remove current attachment
+take ... (both propositions and reasons)
+add:
+	new proposition
+	existing...
+	... because
+	... but
+	because ...
+	but ...
+	comment
+delete
+
+Lemma (logic), which is simultaneously a premise for a contention above it and a contention for premises below it
+Lemma (mathematics), a proven statement used as a stepping-stone toward the proof of another statement
+A final conclusion is a proposition, which is reached after considering the evidence, arguments or premises
+
+A final conclusion is a proposition, which is reached after considering the evidence, arguments or premises. Their presence is common in academic or research work. Scientific Research
+
+proposition->{premise,concluson}
+
+In research and experimentation, conclusions are determinations 
+made by studying the results of previous work and practice is the
+ science that studies the rules and procedures to distinguish correct reasoning (valid) or incorrect (invalid). 
+ The arguments (syllogisms) are movements of thought by which to extract something familiar from something known. 
+ The arguments consist of propositions (or Juci). The propositions that serve as departure (the known) are called premises, 
+ and the proposition that derives from these premises is called conclusion. The arguments can be inductive or deductive. 
+ The traditional logic (Aristotelian) mostly devoted to the analysis of deduction and fallacies (invalid and misleading arguments,
+ see Richard Ortiz Ortiz, Logic, Quito: Publiconti 1994). Music
+*/
