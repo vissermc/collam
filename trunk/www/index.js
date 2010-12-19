@@ -1,4 +1,5 @@
-ixUrlTail=0;ixType=1;ixText=2;ixProp=3;ixColor=4;ixArrowMode=5;ixArrowColor=6;ixLineUrlTail=7;ixChildren=8;
+
+ixUrlTail=0;ixType=1;ixText=2;ixProp=3;ixColor=4;ixArrowMode=5;ixArrowColor=6;ixLineUrlTail=7;ixLineText=8;ixMetaChildren=9;ixChildren=10;
 
 lineMargin=20;
 lineWidth=5;
@@ -108,11 +109,13 @@ function px(v)
 	function getIdPostfix()
 	{	return ""+instanceCounter+"_"+backwards+"_"+elemCounter;
 	}
-	function genItems(tree,offset)
+	function genItems(tree,offset,isMeta)
 	{
 		var i;
-		var subOffset=(lineMargin+lineWidth)*tree.length+lineOffset;
-		offset+=subOffset;
+		if (!isMeta)
+		{	var subOffset=(lineMargin+lineWidth)*tree.length+lineOffset;
+			offset+=subOffset;
+		}
 		for(i=0; i<tree.length; i++)
 		{
 			var id=getIdPostfix();
@@ -123,7 +126,7 @@ function px(v)
 			var linef=function(props,box) { return function(event) { lineClick(props,box); event.stopPropagation(); } }(props,box);
 
 			var el=[box];
-			if (props[ixArrowMode]&1)
+			/*if (props[ixArrowMode]&1)
 			{
 				var ar=document.createElement("div");
 				ar.className='arrow0';
@@ -159,17 +162,24 @@ function px(v)
 					line.id='shl'+id;
 					el.push(line);
 				}
-			}
+			}*/
+			//TODO: ixLineText
 			elemCounter++;
+			if (isMeta)
+				offset+=lineOffset;
 			if (backwards)
-				genItems(props[ixChildren],offset);
+			{	genItems(props[ixChildren],offset,false);
+				genItems(props[ixMetaChildren],offset,true);
+			}
 			{
 				var j;
 				for(j=0;j<el.length;j++)
 					container.appendChild(el[j]);
 			}
 			if (!backwards)
-				genItems(props[ixChildren],offset);
+			{	genItems(props[ixMetaChildren],offset,true);
+				genItems(props[ixChildren],offset,false);
+			}
 			//document.write();
 		}
 	}
@@ -229,7 +239,7 @@ function px(v)
 		container=document.createElement("div");
 		elemCounter=0;
 		backwards=1;
-		genItems(spider[0],0);
+		genItems(spider[0],0,false);
 		var cbox;
 		{
 			var ec=document.createElement("div");
@@ -241,16 +251,16 @@ function px(v)
 		}
 		elemCounter=0;
 		backwards=0;
-		genItems(spider[2],0);
+		genItems(spider[2],0,false);
 		elemCounter=0;
 		target.appendChild(container);
-		{
+		/*{
 			backwards=1;
 			genLines(spider[0],cbox);
 			elemCounter=0;
 			backwards=0;
 			genLines(spider[2],cbox);
-		}
+		}*/
 	}
 }
 //document.offsetHeight
