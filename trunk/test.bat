@@ -16,8 +16,8 @@ showLog=?();
 include(httpPath+'tyledHttp.tyle');
 trace('finish init');
 ///// main
-getJSONTriple(currentItem);
-act(0,0,1000,0.3);
+//putline(indent(.?getJSONTriple(currentItem,-1)));
+//act(0,0,1000,0.3);
 ///// end
 trace('done');
 quit!;

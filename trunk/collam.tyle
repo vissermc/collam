@@ -31,22 +31,22 @@ conclusion
 */
 
 
-// user<-usees, conclusion<-argument
+// conclusion<-arguments, conclusion<-argument
 
 curTracker; // ==() for latest state.
 
 [Filter={isTracked,...}];
-[User={[Filter=>]filters}];
+[Conclusion={[Filter=>]filters}];
 [Change={who,when,isPrivateEdit}];
 [TrackedObjectState={isDeleted,[Change]change,data}];
-[TrackedObjectStates=User=>TrackedObjectState];
-[TrackedObject={[{new,destroy,getText,unuse,calcProbability,getColor}]class,[TrackedObjectStates]states}];
-[Connection=TrackedObject+{ [Item]usee, [TrackedObject]user, [Item=>Connection]metaUsees}];
-[Item=TrackedObject+{id, [Item=>Connection]usees,[TrackedObject=>Connection]users}];
+[TrackedObjectStates=Conclusion=>TrackedObjectState];
+[TrackedObject={[{new,destroy,getText,unuse,calcProbability,getColor,getConclusions}]class,id,[TrackedObjectStates]states,[Item=>Connection]arguments}];
+[Connection=TrackedObject+{ [Item]argument, [TrackedObject]conclusion}];
+[Item=TrackedObject+{[TrackedObject=>Connection]conclusions}];
 [Item.class=TrackedObject.class+{type,getTagText,hasArrowPoint,serialize}];
 [ConnData={probability}];
 [PropData={text,probability}];
-[Project={[=>User]users,[=>Item]items,nextID}];
+[Project={[=>Conclusion]conclusions,[=>Item]items,nextID}];
 [=>Project]projects;
 [TrackedObjectState]indexStates=?<[TrackedObject]o>(&o.states[{:curTracker}@o?curTracker]);
 publishState=?<[TrackedObjectStates]>
@@ -56,31 +56,35 @@ publishState=?<[TrackedObjectStates]>
 
 tryDestroy=?<[TrackedObject]o>
 (	
-	!sum(i.states%!$.data.isDeleted) ?
+	!sum(o.states%!$.data.isDeleted) ?
 		o->destroy();
 );
-
+tryDestroyItem=?
+(	//todo
+);
 &[Connection.class]connectionClass.!
 (
 	*$={};
-	$.new=?<usee,user> (&{connectionClass,{:()=>{0,(),0},usee,user,{:}}};);
+	$.new=?<argument,conclusion> (&{connectionClass,getNewId!,{:()=>{0,(),0}}, {:}, argument,conclusion});
 	$.destroy=?<><[Connection]this>
 	(	
-		this.usee->unuse(this.user);
-		this.user.usees:-=this.usee;
-		this.metaUsees:!($.users:-=this;);
+		this.argument->unuse(this.conclusion);
+		this.conclusion.arguments:-=this.argument;
+		this.metaArgs:!($.conclusions:-=this;);
 	);
+	$.getConclusions = ? <><[Connection]this> {:this.conclusion};
 	$.unuse=$.destroy;
 	$.calcProbability=?<><[Connection]this>
 	(
 		.p=getConnData(this).probability;
-		(p<0?1:0)+(p*$.usee->calcProbability())
+		putline(.?{p,this.argument->calcProbability(),(p<0?1.0:0.0)+(p*this.argument->calcProbability())});
+		(p<0?1.0:0.0)+(p*this.argument->calcProbability())
 	);
 	$.getColor=?<><[Connection]this>
 	(
 		.p=getConnData(this).probability;
-		.cp=this->calcConnectionProbability();
-		getCSSColor(p<0?1-cp:cp,p<0?{1,0,0}:{0,1,0})
+		.cp=this->calcProbability();
+		getCSSColor(p<0?1.0-cp:cp,p<0?{1,0,0}:{0,1,0})
 	);
 );
 acceptItemChange=?<[Item]i>
@@ -90,14 +94,14 @@ acceptItemChange=?<[Item]i>
 );
 acceptConnectionChange=?<[Connection]c>
 (
-	i.states[curTracker]=i.states[()];
-	tryDestroyConnection(i);
+	c.states[curTracker]=c.states[()];
+	tryDestroyConnection(c);
 );
 
 serializeObjectStates=?<[TrackedObjectStates]>
 (	$%!{$.key.id,$.data.!{$.isDeleted,$.change.!{$.who.id,$.when,$.isPrivateEdit},$.data}}
 );
-serializeUser=?<[User]> ($);
+serializeConclusion=?<[Conclusion]> ($);
 
 isObjectValid=?<[TrackedObject]o>(indexStates(o).isDeleted==0);
 getData=?<[TrackedObject]o> (	&indexStates(o).data );
@@ -106,46 +110,56 @@ getData=?<[TrackedObject]o> (	&indexStates(o).data );
 getChangeData=?{curTracker,dateTime!,1};
 prepareEdit=?<[TrackedObject]o>
 (	{:curTracker}@o.states ?:
-	(	item.states[o]=item.states[()];
+	(	o.states[curTracker]=o.states[()];
 	);
-	item.states[o].change=getChangeData();
+	o.states[curTracker].change=getChangeData();
 );
-[Item=>Connection]getValidUsees=?<[Item]item>
-(	.r={:}; item.usees %! (isObjectValid($.key) ? (r[$.key]=$.data;);); r
+[Connection=>]getValidArgConnections=?<[TrackedObject]object>
+(	.r={:}; object.arguments %! (isObjectValid($.data) ? (r:+=$.data;);); r
 );
-[Item=>Connection]getValidMetaUsees=?<[Connection]conn>
-(	.r={:}; conn.metaUsees %! (isObjectValid($.key) ? (r[$.key]=$.data;);); r
+[Item=>Connection]getValidArgs=?<[TrackedObject]object>
+(	.r={:}; object.arguments %! (isObjectValid($.key) ? (r[$.key]=$.data;);); r
 );
-[Item=>Connection]getValidUsers=?<[Item]item>
-(	.r={:}; item.users %! (isObjectValid($.key) ? (r[$.key]=$.data;);); r
+[Item=>Connection]getValidConnArgs=?<[TrackedObject]object>
+(	.r={:}; object.arguments %! (isObjectValid($.data) ? (r+=getValidArgs($.data););); r
 );
-
+[TrackedObject=>Connection]getValidConclusions=?<[TrackedObject]object>
+(	.r={:}; object->getConclusions() %! (isObjectValid($.key) ? (r[$.key]=$.data;);); r
+);
+tryDestroyConnection =?
+( //todo
+);
 getConnectionText = ?<[Connection]c>
-(	c.user.class==propositionClass?(getConnData(c).probability>=0?'supports':'challenges'):getConnData(c).probability
+(	c.conclusion.class==propositionClass?(getConnData(c).probability>=0?'supports':'challenges'):getConnData(c).probability
 );
-
 &[Item.class]itemClass.!
 (
 	*$={};
-	$.new = ?<class,data> registerItem(&{class,{:()=>{0,(),data}},0,{:},{:}});
+	$.new = ?<class,data> registerItem(&{class,0,{:()=>{0,(),data}},{:},{:}});
 	$.serialize=? <className><[Item]this>
 	(
 		{	className,
 			serializeObjectStates(this.states),
 			this.id,
-			this.usees%!{$.key.id,serializeConnection($.data)} //serializeObjectStates
+			this.arguments%!{$.key.id,serializeConnection($.data)} //serializeObjectStates
 		}
+	);
+	$.getConclusions = ? <><[Item]this>
+	(
+		this.conclusions
 	);
 	$.calcProbability = ? <><[Item]this>
 	(	.m=1.0;
-		getValidUsees(this):!(m*=calcConnectionProbability!;);
+		putline('m1');
+		getValidArgConnections(this):!(m*=$->calcProbability(););
+		putline('m2:'+m);
 		m
 	);
-	$.unuse=?<[TrackedObject]user><[Connection]this>(this.users:-=user;);
+	$.unuse=?<[TrackedObject]conclusion><[Connection]this>(this.conclusions:-=conclusion;);
 	$.destroy= ? <><[Item]this>
 	(
-		this.users:!($.usees:-=this;); // force deletion of connections!
-		this.usees:!($.users:-=this;); // force deletion of connections!
+		this.conclusions:!($.arguments:-=this;); // force deletion of connections!
+		this.arguments:!($.conclusions:-=this;); // force deletion of connections!
 	);
 	$.getColor =? <><[Item]this>
 	(
@@ -163,7 +177,7 @@ getConnectionText = ?<[Connection]c>
 	$.new = ?itemClass.new(orClass,());
 	$.calcProbability = ? <><[Item]this>
 	(	.m=1.0;
-		getValidUsees(this):!(m*=1.0-calcConnectionProbability!;);
+		getValidArgConnections(this):!(m*=1.0-$->calcProbability(););
 		1.0-m
 	);
 	$.type = 'or';
@@ -178,51 +192,51 @@ getConnectionText = ?<[Connection]c>
 	$.getText = ? 'And';
 );
 
-connectItems=?<[Item]usee,[Item]user, strength>
+connectItems=?<[Item]argument,[TrackedObject]conclusion, strength>
 (
-	putline('Connecting '+usee.id+'->'+user.id);
-	.hasLoop=findPropsInArguments(usee,gatherConclusions(user,1),1);
+	putline('Connecting '+argument.id+'->'+conclusion.id);
+	.hasLoop=findItemInArguments(argument,gatherConclusions(conclusion,1,1),1,1);
 	!hasLoop ?
 	(	[Connection].c;
-		{:user}@usee.users?
-		(	c=usee.users[user];
+		{:conclusion}@argument.conclusions?
+		(	c=argument.conclusions[conclusion];
 		):
-		(	c=connectionClass.new(usee,user);
-			usee.users[user]=c;
-			user.usees[usee]=c;
+		(	c=connectionClass.new(argument,conclusion);
+			argument.conclusions[conclusion]=c;
+			conclusion.arguments[argument]=c;
 		);
-		c.states[curTracker]={0,getChangeData(),{strength}};			
-		//todo: this should not happen, why was it in the code? {:usee}@user.usees?:(user.usees[usee]=c;);
+		c.states[curTracker]={0,getChangeData(),{0.0(strength)}};
+		//todo: this should not happen, why was it in the code? {:argument}@conclusion.arguments?:(conclusion.arguments[argument]=c;);
 	);
 );
 
-disconnectItems=?<[Item]usee,[Item]user>
+disconnectItems=?<[Item]argument,[Item]conclusion>
 (
-	putline('Disconnecting '+usee.id+'->'+user.id);
-	[Connection].c=usee.users[user];
+	putline('Disconnecting '+argument.id+'->'+conclusion.id);
+	[Connection].c=argument.conclusions[conclusion];
 	@c.states==1 ?
 	(
-		usee.users:-=user;
-		user.usere:-=usee;
+		argument.conclusions:-=conclusion;
+		conclusion.conclusione:-=argument;
 	):
 	(
 		prepareEdit(c);
 		indexStates(c).isDeleted=1;
-		//user.usees[usee][curTracker]={1,getChangeData()};
-		/*!sum(user.usees[usee]%! !$.data.isDeleted ) ?
-		(	user.usees:-=usee;
-			usee.users:-=user;
+		//conclusion.arguments[argument][curTracker]={1,getChangeData()};
+		/*!sum(conclusion.arguments[argument]%! !$.data.isDeleted ) ?
+		(	conclusion.arguments:-=argument;
+			argument.conclusions:-=conclusion;
 		);*/
 	);
 );
 
-disconnectUsees=?<[Item]item>
+disconnectArgs=?<[Item]item>
 (
-	getValidUsees(item):!disconnectItems($,item);
+	getValidArgs(item):!disconnectItems($,item);
 );
-disconnectUsers=?<[Item]item>
+disconnectConclusions=?<[Item]item>
 (
-	getValidUsers(item):!disconnectItems(item,$);
+	getValidConclusions(item):!disconnectItems(item,$);
 );
 
 nextID;
@@ -231,8 +245,8 @@ registerItem=?<[Item]item> ( item.id=getNewId!; items+={:item.id=>item};item);
 
 removeItem=?<[Item]item>
 (
-	disconnectUsees(items);
-	disconnectUsers(items);
+	disconnectArgs(items);
+	disconnectConclusions(items);
 	indexStates(item).isDeleted=1; 
 	tryDestroyItem();
 );
@@ -242,7 +256,8 @@ removeItem=?<[Item]item>
 	*$=itemClass;
 	$.new = ? <text> itemClass.new(propositionClass,{text,1.0});
 	$.calcProbability = ? <><[Item]this>
-	(	getPropData(this).probability * (this.!itemClass.calcProbability())
+	(	putline(.?('hoi',getPropData(this).probability,this.!itemClass.calcProbability()));
+		getPropData(this).probability * (this.!itemClass.calcProbability())
 	);
 	$.getText = ? <><[Item]this>
 	(	getPropData(this).text
@@ -251,6 +266,7 @@ removeItem=?<[Item]item>
 	(	.p=getPropData(this).probability;
 		(this.!itemClass.getTagText(prop))+(p!=prop ? '&nbsp;('+p+')')
 	);
+	$.hasArrowPoint = 1;
 	$.type = 'prop';
 	$.serialize=? <><[Item]this>
 	(
@@ -260,44 +276,50 @@ removeItem=?<[Item]item>
 unserialize=?
 (	eval(format('[<>Class]$',{$[0]}))!.unserialize()
 );
-
-iterateUsers=? <func, includeSelf><[Item]item>
-(	!includeSelf || func(item) ? (
+iterateConclusions=? <func, includeSelf,includeMeta><[TrackedObject]this>
+(	!includeSelf || func(this) ? (
 		.continue=1;
-		getValidUsers(item):!
-		( continue&&=iterateUsers(func,1);
+		getValidConclusions(this):!
+		(	includeMeta || $.class!=connectionClass ?
+			(	
+				continue&&=iterateConclusions(func,1,includeMeta);
+			);
+		);
+		continue
+	)
+);
+iterateArgs=? <func, includeSelf, includeMeta><[Item]this>
+(	!includeSelf || func(this) ? (
+		.continue=1;
+		getValidArgs(this):!
+		( continue&&=iterateArgs(func,1,includeMeta);
+		);
+		includeMeta?(
+			getValidConnArgs(this):!
+			( continue&&=iterateArgs(func,1,includeMeta);
+			);
 		);
 		continue
 	)
 );
 
-iterateUsees=? <func, includeSelf><[Item]item>
-(	!includeSelf || func(item) ? (
-		.continue=1;
-		getValidUsees(item):!
-		( continue&&=iterateUsees(func,1);
-		);
-		continue
-	)
-);
-
-findPropsInArguments=?<[Item]root, [Proposition=>]findOneOfUs,includeSelf>
+findItemInArguments=?<[Item]root, [Item=>]findOneOfUs,includeSelf,includeMeta>
 (
 	.f= ? !($@findOneOfUs);
-	!(root.!iterateUsees(f,includeSelf))
+	!(root.!iterateArgs(f,includeSelf,includeMeta))
 );
-
-findPropsInConclusions=?<[Item]root, [Proposition=>]findOneOfUs,includeSelf>
+/*
+findObjectInConclusions=?<[Item]root, [TrackedObject=>]findOneOfUs,includeSelf>
 (
 	.f= ? !($@findOneOfUs);
-	!(root.!iterateUsers(f,includeSelf))
-);
+	!(root.!iterateConclusions(f,includeSelf))
+);*/
 
-gatherConclusions=?<[Item]root,includeSelf>
+gatherConclusions=?<[TrackedObject]root,includeSelf,includeMeta>
 (
 	s={:};
 	.f= ? (s:+=$;1);
-	root.!iterateUsers(f,includeSelf);
+	root.!iterateConclusions(f,includeSelf,includeMeta);
 	s
 );
 
@@ -305,35 +327,32 @@ getItemJSONProps=?<[Item]i>
 {	.type=i->type; format('&type=<>&item=$<>',{type, i.id}), type, i->getText(),i->getTagText(i->calcProbability()),i->getColor()
 };
 
-urlTailForConnection=?<[Item]usee, [Item]user> (format('&type=connection&item=$<>&item2=$<>',{usee.id, user.id}));
+urlTailForConnection=?<[TrackedObject]argument, [TrackedObject]conclusion> (format('&type=connection&item=$<>&item2=$<>',{argument.id, conclusion.id}));
 
 getJSONItemConclusionTree=?<[Item]item,level>
 (
-	.c=item->getColor();
-	.ap=item->hasArrowPoint;
-	(level ? item.users) %!
-	(
-		getItemJSONProps($.key)+{ap|(@$.key.usees>1?4)|(level==1&&$.key.users?8),c,urlTailForConnection(item,$.key), $.data->getText(), getJSONMetaArgumentTree($.data,level-1), getJSONItemConclusionTree($.key,level-1)}
+	level ? ( 
+		//.c=item->getColor();
+		.ap=item->hasArrowPoint;
+		item.conclusions %!
+		(
+			$.key.class!=connectionClass?
+			(	[Item]($.key);
+				getItemJSONProps($.key)+{ap|(@$.key.arguments>1?4)|(level==1&&$.key.conclusions?8),$.data->getColor(),urlTailForConnection(item,$.key), $.data->getText(), getJSONArgumentTree($.data,level-1), getJSONItemConclusionTree($.key,level-1)}
+			)
+		)
 	)
 // ixUrlTail=0;ixType=1;ixText=2;ixProp=3;ixColor=4;ixArrowMode=5;ixArrowColor=6;ixLineUrlTail=7;ixLineText=8;ixMetaChildren=9;ixChildren=10;
 );
 
-getJSONItemArgumentTree=?<[Item]item,level>
+getJSONArgumentTree=?<[TrackedObject]object,level>
 (
-	level ? getJSONListArgumentTree(getValidUsees(item) )
-);
-
-getJSONMetaArgumentTree=?<[Connection]conn,level>
-(
-	level ? getJSONListArgumentTree(getValidMetaUsees(item) )
-);
-
-getJSONListArgumentTree=?<[Item=>]list,level>
-(
-	list:!
-	(
-		.l=getItemJSONProps!;
-		l+{($->hasArrowPoint*2) | (@$.key.users>1?4)|(level==1&&getValidUsees($.key)?16), l[-1],urlTailForConnection($.key,item), getJSONMetaArgumentTree($.data,level-1),getJSONItemArgumentTree($.key,level-1)}
+	level ? 
+	(	getValidArgs(object)%!
+		(
+			.l=getItemJSONProps($.key);
+			l+{($.key->hasArrowPoint*2) | (@$.key.conclusions>1?4)|(level==1&&getValidArgs($.key)?16), $.data->getColor(),urlTailForConnection($.key,object), $.data->getText(),getJSONArgumentTree($.data,level-1),getJSONArgumentTree($.key,level-1)}
+		)
 	)
 );
 
@@ -341,8 +360,8 @@ getJSONTriple=?<[Item]center,level>
 (
 	.l=getItemJSONProps(center);
 	getJSONItemConclusionTree(center,level-1),
-	l+{(level==1&&getValidUsers(center)?8)|(level==1&&getValidUsees(center)?16)},
-	getJSONItemArgumentTree(center,level-1)
+	l+{(level==1&&getValidConclusions(center)?8)|(level==1&&getValidArgs(center)?16)},
+	getJSONArgumentTree(center,level-1)
 );
 
 collam_init=?
@@ -391,8 +410,8 @@ collam_init=?
 		'reason'=>
 		{
 			{'position as root',0,?(currentItem=item;)},
-			{'attach to ...',0,generateItemQuestion(?(disconnectUsers(item);connectItems(item,$)))},
-			{'attach to new conclusion',0,attachNewConclusionFunc=?(val==()?{'Enter text of new proposition.',''}:(disconnectUsers(item);connectItems(item,propositionClass.new(val))))},
+			{'attach to ...',0,generateItemQuestion(?(disconnectConclusions(item);connectItems(item,$)))},
+			{'attach to new conclusion',0,attachNewConclusionFunc=?(val==()?{'Enter text of new proposition.',''}:(disconnectConclusions(item);connectItems(item,propositionClass.new(val))))},
 			{'insert new argument',0,?(val==()?{'Enter text of new proposition.',''}:(connectItems(propositionClass.new(val),item)))},
 			{'insert or-operator',0,?connectItems(orClass.new(),item)},
 			{'insert not-operator',0,?connectItems(notClass.new(),item)},
@@ -400,14 +419,14 @@ collam_init=?
 			{'delete',0,deleteFunc },
 			{'invert support vs. challenge',0,?(prepareEdit(item);&getReasonData(item).isSupportive.!(*$=!$;);)},
 			{'meta-reasoning',1},
-			{'attach to new support',0,?(disconnectUsers(item);connectItems(item,reasonClass.new(0)))},
-			{'attach to new challenge',0,?(disconnectUsers(item);connectItems(item,reasonClass.new(1)))},
+			{'attach to new support',0,?(disconnectConclusions(item);connectItems(item,reasonClass.new(0)))},
+			{'attach to new challenge',0,?(disconnectConclusions(item);connectItems(item,reasonClass.new(1)))},
 			{'insert new support',0,?connectItems(reasonClass.new(1),item)},
 			{'insert new challenge',0,?connectItems(reasonClass.new(1),item)},
 		},
 		'or'=>
 		{
-			{'attach to ...',0,generateItemQuestion(?(disconnectUsers(item);connectItems(item,$)))},
+			{'attach to ...',0,generateItemQuestion(?(disconnectConclusions(item);connectItems(item,$)))},
 			{'attach to new conclusion',0,attachNewConclusionFunc},
 			{'insert new proposition',0,?(val==()?{'Enter text of new proposition.',''}:(connectItems(propositionClass.new(val),item)))},
 			{'insert not-operator',0,?connectItems(notClass.new(),item)},
@@ -417,7 +436,7 @@ collam_init=?
 		},
 		'and'=>
 		{
-			{'attach to ...',0,generateItemQuestion(?(disconnectUsers(item);connectItems(item,$)))},
+			{'attach to ...',0,generateItemQuestion(?(disconnectConclusions(item);connectItems(item,$)))},
 			{'attach to new conclusion',0,attachNewConclusionFunc},
 			{'insert new proposition',0,?(val==()?{'Enter text of new proposition.',''}:(connectItems(propositionClass.new(val),item)))},
 			{'insert not-operator',0,?connectItems(notClass.new(),item)},
@@ -427,7 +446,7 @@ collam_init=?
 		},
 		'not'=>
 		{
-			{'attach to ...',0,generateItemQuestion(?(disconnectUsers(item);connectItems(item,$)))},
+			{'attach to ...',0,generateItemQuestion(?(disconnectConclusions(item);connectItems(item,$)))},
 			{'attach to new conclusion',0,attachNewConclusionFunc},
 			{'insert new proposition',0,?(val==()?{'Enter text of new proposition.',''}:(connectItems(propositionClass.new(val),item)))},
 			{'insert or-operator',0,?connectItems(orClass.new(),item)},
