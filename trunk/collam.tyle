@@ -371,10 +371,16 @@ collam_init=?
 	.p2=propositionClass.new('center conclusion');
 	.p3=propositionClass.new('arg 1');
 	[Item].p4=propositionClass.new('arg 2');
+	[Item].p5=propositionClass.new('arg 3');
+	.p6=orClass.new();
+	.p7=propositionClass.new('arg 4');
 	getPropData(p4).probability=0.2;
 	connectItems(p2,p1,1);
-	connectItems(p3,p2,1);
+	connectItems(p3,p6,1);
+	connectItems(p5,p6,1);
+	connectItems(p6,p2,1);
 	connectItems(p4,p2,-1);
+	connectItems(p7,p5.conclusions[p6],-1);
 	currentItem=p2;
 );
 
