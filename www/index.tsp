@@ -3,6 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <%
+//putline(indent(.?getJSONTriple(currentItem,-1)));
 include(projectPath+'collam.tyle');
 .hasEmptyParam;
 paramDefaults={:'vp_f_p_min'=>0.0,'tf_p_min'=>0.0,'tf_p_max'=>1.0,'vp_f_p_max'=>1.0,'vp_f_ip_min'=>0.0,'tf_ip_min'=>0.0,'tf_ip_max'=>1.0,'vp_f_ip_max'=>1.0};
@@ -217,7 +218,7 @@ function init()
 	};
 		//eFloatMenus.push(document.getElementById('floatMenu'+i));
 	eContainer=document.getElementById('container');
-	var triple=<%=tyle2json(getJSONTriple(currentItem,0))%>;
+	var triple=<%=tyle2json(getJSONTriple(currentItem,-1))%>;
 	fillSpider(eContainer,triple);
 }
 </script>

@@ -106,26 +106,28 @@ function px(v)
 	var elemCounter;
 	var backwards;
 	var container;
+	var conns;//x,w,s,d,isMeta,color
 	function getIdPostfix()
 	{	return ""+instanceCounter+"_"+backwards+"_"+elemCounter;
 	}
-	function genItems(tree,offset,isMeta)
+	function genItems(tree,parentOffset,isMeta,parentId)
 	{
 		var i;
+		var boxOffset=parentOffset;
 		if (!isMeta)
-		{	var subOffset=(lineMargin+lineWidth)*tree.length+lineOffset;
-			offset+=subOffset;
+		{	var subOffset=lineMargin*tree.length+lineOffset;
+			boxOffset+=subOffset;
 		}
-		for(i=0; i<tree.length; i++)
+		for(i in tree)
 		{
 			var id=getIdPostfix();
 			var props=tree[i];
 			var box=makeItemBox(props);
 			box.id='b'+id;
-			box.style.marginLeft=px(offset);
+			box.style.marginLeft=px(boxOffset);
 			var linef=function(props,box) { return function(event) { lineClick(props,box); event.stopPropagation(); } }(props,box);
-
-			var el=[box];
+			var connOffset=parentOffset+lineOffset+(lineMargin)*(backwards?i: tree.length-i-1)+lineOffset;
+			conns.push({'x':connOffset,'s':parentId,'w':boxOffset-connOffset,'d':box.id,'isMeta':false,'color':props[ixArrowColor] });
 			/*if (props[ixArrowMode]&1)
 			{
 				var ar=document.createElement("div");
@@ -166,21 +168,43 @@ function px(v)
 			//TODO: ixLineText
 			elemCounter++;
 			if (isMeta)
-				offset+=lineOffset;
+				boxOffset+=lineOffset;
 			if (backwards)
-			{	genItems(props[ixChildren],offset,false);
-				genItems(props[ixMetaChildren],offset,true);
+			{	genItems(props[ixChildren],boxOffset,false,box.id);
+				genItems(props[ixMetaChildren],boxOffset,true,box.id);
 			}
-			{
+			container.appendChild(box);
+			/*{
 				var j;
-				for(j=0;j<el.length;j++)
+				for(j in el)
 					container.appendChild(el[j]);
-			}
+			}*/
 			if (!backwards)
-			{	genItems(props[ixMetaChildren],offset,true);
-				genItems(props[ixChildren],offset,false);
+			{	genItems(props[ixMetaChildren],boxOffset,true,box.id);
+				genItems(props[ixChildren],boxOffset,false,box.id);
 			}
 			//document.write();
+		}
+	}
+	function drawConns(container)
+	{
+		for(c in conns)
+		{
+			var line=document.createElement("div");
+			line.className='line';
+			//todo line.onclick=linef;
+			line.style.left=px(conns[c].x);
+			line.style.width=px(lineWidth);//px(conns[c].w);
+			//alert(conns[c].s);
+			var s=document.getElementById(conns[c].s);
+			var d=document.getElementById(conns[c].d);
+			var y=s.offsetTop<d.offsetTop ? s.offsetTop+s.offsetHeight : d.offsetTop+d.offsetHeight/2;
+			var h=(s.offsetTop<d.offsetTop ? d.offsetTop+d.offsetHeight/2 : s.offsetTop ) - y;
+			//alert(y);
+			line.style.top=px(y);
+			line.style.height=px(h);
+			line.style.backgroundColor=conns[c].color;//"#334455";
+			container.appendChild(line);
 		}
 	}
 	function genLines(tree,parentBox)
@@ -236,24 +260,29 @@ function px(v)
 	function fillSpider(target,spider)
 	{
 		instanceCounter++;
+		conns=[];
 		container=document.createElement("div");
 		elemCounter=0;
 		backwards=1;
-		genItems(spider[0],0,false);
+		var cid="centre"+instanceCounter;
+		genItems(spider[0],0,false,cid);
+		var bid;
 		var cbox;
 		{
-			var ec=document.createElement("div");
-			ec.className="item";
-			ec.id="centre"+instanceCounter;
+			//var ec=document.createElement("div");
+			//ec.className="item";
+			//ec.id=cid;
+			//ec.appendChild(cbox);
 			cbox=makeItemBox(spider[1]);
-			ec.appendChild(cbox);
-			container.appendChild(ec);
+			cbox.id=cid;
+			container.appendChild(cbox);
 		}
 		elemCounter=0;
 		backwards=0;
-		genItems(spider[2],0,false);
+		genItems(spider[2],0,false,cid);
 		elemCounter=0;
 		target.appendChild(container);
+		//alert(document.getElementById(cid).offsetTop);
 		/*{
 			backwards=1;
 			genLines(spider[0],cbox);
@@ -261,6 +290,7 @@ function px(v)
 			backwards=0;
 			genLines(spider[2],cbox);
 		}*/
+		drawConns(target);
 	}
 }
 //document.offsetHeight
