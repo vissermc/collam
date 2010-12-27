@@ -1,5 +1,5 @@
 
-ixUrlTail=0;ixType=1;ixText=2;ixProp=3;ixColor=4;ixArrowMode=5;ixArrowColor=6;ixLineUrlTail=7;ixLineText=8;ixMetaChildren=9;ixChildren=10;
+ixUrlTail=0;ixType=1;ixText=2;ixProp=3;ixColor=4;ixArrowMode=5;ixArrowColor=6;ixArrowUrlTail=7;ixArrowText=8;ixMetaChildren=9;ixChildren=10;
 
 lineMargin=20;
 lineWidth=5;
@@ -43,9 +43,9 @@ function itemClick(props,box)
 		eFloatMenus[type].style.top=px(box.offsetTop+box.offsetHeight);
 	}
 }
-function lineClick(props,box)
+function arrowClick(props,box)
 {
-	if (switchMenu(props[ixLineUrlTail],'connection'))
+	if (switchMenu(props[ixArrowUrlTail],'connection'))
 	{
 		eFloatMenus.connection.style.left=px(box.offsetLeft-30);
 		eFloatMenus.connection.style.top=px(Math.floor(box.offsetTop+box.offsetHeight/2+6));
@@ -125,9 +125,9 @@ function px(v)
 			var box=makeItemBox(props);
 			box.id='b'+id;
 			box.style.marginLeft=px(boxOffset);
-			var linef=function(props,box) { return function(event) { lineClick(props,box); event.stopPropagation(); } }(props,box);
+			var linef=function(props,box) { return function(event) { arrowClick(props,box); event.stopPropagation(); } }(props,box);
 			var connOffset=parentOffset+lineOffset+(lineMargin)*(backwards?i: tree.length-i-1)+lineOffset;
-			conns.push({'x':connOffset,'s':parentId,'w':boxOffset-connOffset,'d':box.id,'isMeta':false,'color':props[ixArrowColor] });
+			conns.push({'x':connOffset,'s':parentId,'w':boxOffset-connOffset+20,'d':box.id,'isMeta':false,'color':props[ixArrowColor] });
 			/*if (props[ixArrowMode]&1)
 			{
 				var ar=document.createElement("div");
@@ -165,22 +165,34 @@ function px(v)
 					el.push(line);
 				}
 			}*/
-			//TODO: ixLineText
+			//TODO: ixArrowText
 			elemCounter++;
 			if (isMeta)
 				boxOffset+=lineOffset;
 			if (backwards)
 			{	genItems(props[ixChildren],boxOffset,false,box.id);
 				genItems(props[ixMetaChildren],boxOffset,true,box.id);
+				container.appendChild(box);
 			}
-			container.appendChild(box);
+			
+			if (props[ixArrowText]!=null)
+			{	var arrowText=document.createElement("div");
+				arrowText.className='arrowText';
+				arrowText.style.marginLeft=px(connOffset);
+				arrowText.innerHTML=props[ixArrowText];
+				arrowText.style.color=props[ixArrowColor];
+				//arrowText.style.textShadow="black 0px 0px 1px";
+				container.appendChild(arrowText);	
+			}
 			/*{
 				var j;
 				for(j in el)
 					container.appendChild(el[j]);
 			}*/
 			if (!backwards)
-			{	genItems(props[ixMetaChildren],boxOffset,true,box.id);
+			{	
+				container.appendChild(box);
+				genItems(props[ixMetaChildren],boxOffset,true,box.id);
 				genItems(props[ixChildren],boxOffset,false,box.id);
 			}
 			//document.write();
@@ -190,21 +202,59 @@ function px(v)
 	{
 		for(c in conns)
 		{
-			var line=document.createElement("div");
-			line.className='line';
-			//todo line.onclick=linef;
-			line.style.left=px(conns[c].x);
-			line.style.width=px(lineWidth);//px(conns[c].w);
-			//alert(conns[c].s);
 			var s=document.getElementById(conns[c].s);
 			var d=document.getElementById(conns[c].d);
-			var y=s.offsetTop<d.offsetTop ? s.offsetTop+s.offsetHeight : d.offsetTop+d.offsetHeight/2;
-			var h=(s.offsetTop<d.offsetTop ? d.offsetTop+d.offsetHeight/2 : s.offsetTop ) - y;
-			//alert(y);
-			line.style.top=px(y);
-			line.style.height=px(h);
-			line.style.backgroundColor=conns[c].color;//"#334455";
-			container.appendChild(line);
+			var backwards=s.offsetTop>d.offsetTop;
+			var yd=d.offsetTop+d.offsetHeight/2;
+			var y=backwards ? yd : s.offsetTop+s.offsetHeight;
+			var h=(backwards ? s.offsetTop : yd ) - y;
+			{
+				var line=document.createElement("div");
+				line.className='line';
+				//todo line.onclick=linef;
+				line.style.left=px(conns[c].x);
+				line.style.width=px(lineWidth);//px(conns[c].w);
+				//alert(conns[c].s);
+				//alert(y);
+				line.style.top=px(y);
+				line.style.height=px(h);
+				line.style.backgroundColor=conns[c].color;//"#334455";
+				container.appendChild(line);
+			}
+			{
+				var line=document.createElement("div");
+				line.className='line';
+				//todo line.onclick=linef;
+				line.style.left=px(conns[c].x);
+				line.style.width=px(conns[c].w);//px(conns[c].w);
+				line.style.top=px(yd);
+				line.style.backgroundColor=conns[c].color;//"#334455";
+				container.appendChild(line);
+			}
+			if (backwards)
+			{
+				var ar=document.createElement("div");
+				ar.className='arrow0';
+				ar.innerHTML='<img src="arrow.png"></img>';
+				//ar.addEventListener('click',linef,false);
+
+				ar.style.top=px(y-6);
+				ar.style.left=px(conns[c].x+conns[c].w-8);
+				ar.style.backgroundColor=conns[c].color;
+				container.appendChild(ar);
+			}
+			else
+			{
+				var ar=document.createElement("div");
+				ar.className='arrow1';
+				ar.innerHTML='<img src="arrow.png"></img>';
+				//ar.addEventListener('click',linef,false);
+
+				ar.style.top=px(y);
+				ar.style.left=px(conns[c].x-6);
+				ar.style.backgroundColor=conns[c].color;
+				container.appendChild(ar);
+			}
 		}
 	}
 	function genLines(tree,parentBox)

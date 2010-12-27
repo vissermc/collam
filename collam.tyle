@@ -65,7 +65,7 @@ tryDestroyItem=?
 &[Connection.class]connectionClass.!
 (
 	*$={};
-	$.new=?<argument,conclusion> (&{connectionClass,getNewId!,{:()=>{0,(),0}}, {:}, argument,conclusion});
+	$.new=?<argument,conclusion> (&{&connectionClass,getNewId!,{:()=>{0,(),0}}, {:}, argument,conclusion});
 	$.destroy=?<><[Connection]this>
 	(	
 		this.argument->unuse(this.conclusion);
@@ -77,7 +77,6 @@ tryDestroyItem=?
 	$.calcProbability=?<><[Connection]this>
 	(
 		.p=getConnData(this).probability;
-		putline(.?{p,this.argument->calcProbability(),(p<0?1.0:0.0)+(p*this.argument->calcProbability())});
 		(p<0?1.0:0.0)+(p*this.argument->calcProbability())
 	);
 	$.getColor=?<><[Connection]this>
@@ -85,6 +84,11 @@ tryDestroyItem=?
 		.p=getConnData(this).probability;
 		.cp=this->calcProbability();
 		getCSSColor(p<0?1.0-cp:cp,p<0?{1,0,0}:{0,1,0})
+	);
+	$.getText=?<><[Connection]this>
+	(
+		.p=getConnData(this).probability;
+		this.conclusion.class==propositionClass?(p>=0?'supports':'challenges'):(p==1.0?():''(p))
 	);
 );
 acceptItemChange=?<[Item]i>
@@ -129,9 +133,6 @@ prepareEdit=?<[TrackedObject]o>
 tryDestroyConnection =?
 ( //todo
 );
-getConnectionText = ?<[Connection]c>
-(	c.conclusion.class==propositionClass?(getConnData(c).probability>=0?'supports':'challenges'):getConnData(c).probability
-);
 &[Item.class]itemClass.!
 (
 	*$={};
@@ -150,9 +151,7 @@ getConnectionText = ?<[Connection]c>
 	);
 	$.calcProbability = ? <><[Item]this>
 	(	.m=1.0;
-		putline('m1');
 		getValidArgConnections(this):!(m*=$->calcProbability(););
-		putline('m2:'+m);
 		m
 	);
 	$.unuse=?<[TrackedObject]conclusion><[Connection]this>(this.conclusions:-=conclusion;);
@@ -256,8 +255,7 @@ removeItem=?<[Item]item>
 	*$=itemClass;
 	$.new = ? <text> itemClass.new(propositionClass,{text,1.0});
 	$.calcProbability = ? <><[Item]this>
-	(	putline(.?('hoi',getPropData(this).probability,this.!itemClass.calcProbability()));
-		getPropData(this).probability * (this.!itemClass.calcProbability())
+	(	getPropData(this).probability * (this.!itemClass.calcProbability())
 	);
 	$.getText = ? <><[Item]this>
 	(	getPropData(this).text
