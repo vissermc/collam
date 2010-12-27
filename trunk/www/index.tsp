@@ -94,6 +94,13 @@ div.box
 	padding:5px;
 	margin:5px 0px 5px 0px;
 	cursor: pointer;
+	-moz-border-radius: 5px;
+	border-radius: 5px;	
+}
+div.arrowText
+{
+	float:left;
+	clear:left;
 }
 div.line,div.shortlineHor,div.shortlineVert
 {
@@ -151,6 +158,8 @@ div.probabilityBox
 {
 	border: 1px solid #aaaaaa;
 	background-color: white;
+	-moz-border-radius: 3px;
+	border-radius: 3px;	
 }
 div.itemText, div.probabilityBox
 {
