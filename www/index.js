@@ -77,9 +77,6 @@ function makeItemBox(props)
 		e.className='itemText';
 		e.innerHTML=props[ixText];
 		b.appendChild(e);
-		e=document.createElement("div");
-		e.className='itemFinish';
-		b.appendChild(e);
 	}
 	b.addEventListener('click',function(event) { itemClick(props,b); event.stopPropagation();},false);
 //	b.onclick=function() {  return false;}

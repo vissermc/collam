@@ -168,14 +168,9 @@ div.probabilityBox
 }
 div.itemText, div.probabilityBox
 {
+	display:inline-block;
 	padding: 2px;
 	margin-right: 5px;
-	float:left;
-}
-div.itemFinish
-{
-	clear:both;
-	margin: 0 auto;
 }
 a.menuItem 
 {
