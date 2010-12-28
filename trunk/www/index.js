@@ -156,19 +156,22 @@ function px(v)
 			var s=document.getElementById(conns[c].s);
 			var d=document.getElementById(conns[c].d);
 			var backwards=s!=null && s.offsetTop>d.offsetTop;
+			var isMeta=conns[c].isMeta;
 			var yd=d.offsetTop+d.offsetHeight/2;
 			var y=s==null?yd : ( backwards ? yd : s.offsetTop+s.offsetHeight );
 			var h=(backwards ? s.offsetTop : yd ) - y;
+			if (1)
 			{
 				var line=document.createElement("div");
 				line.className='line';
 				//todo line.onclick=linef;
-				line.style.left=px(conns[c].x+(conns[c].isMeta?conns[c].w:0));
+				line.style.left=px(conns[c].x+(isMeta?conns[c].w:0));
 				line.style.width=px(lineWidth);//px(conns[c].w);
 				//alert(conns[c].s);
 				//alert(y);
-				line.style.top=px(y);
-				line.style.height=px(h);
+				var lineDown=isMeta||backwards?lineWidth:0;
+				line.style.top=px(y+lineDown);
+				line.style.height=px(h-lineDown);
 				line.style.backgroundColor=conns[c].color;//"#334455";
 				container.appendChild(line);
 			}
@@ -176,10 +179,30 @@ function px(v)
 				var line=document.createElement("div");
 				line.className='line';
 				//todo line.onclick=linef;
-				line.style.left=px(conns[c].x);
-				line.style.width=px(conns[c].w);//px(conns[c].w);
-				line.style.top=px(yd);
-				line.style.backgroundColor=conns[c].color;//"#334455";
+				line.style.left=px(conns[c].x+(isMeta?5:0));
+				line.style.width=px(conns[c].w-5);//px(conns[c].w);
+				line.style.top=px(yd-(!isMeta&&!backwards?10:0));
+				line.style.height=px(10);
+				if (isMeta)
+				{	line.style.borderRight="5px solid";
+					line.style.borderTop="5px solid";
+					line.style.MozBorderRadius="0px 10px 10px 10px";
+				}
+				else 
+				{	line.style.borderLeft="5px solid";
+					if (backwards)
+					{	line.style.borderTop="5px solid";
+						line.style.MozBorderRadius="10px 10px 0px 10px";
+						line.style.top=px(yd);
+					}
+					else
+					{	line.style.borderBottom="5px solid";
+						line.style.top=px(yd-10);
+						line.style.MozBorderRadius="10px 10px 0px 10px";
+					}
+				}
+				line.style.borderColor=conns[c].color;//"#334455";
+				//line.style.backgroundColor=conns[c].color;//"#334455";
 				container.appendChild(line);
 			}
 			if(conns[c].arrow)
@@ -187,12 +210,12 @@ function px(v)
 				if (backwards)
 				{
 					var ar=document.createElement("div");
-					ar.className=conns[c].isMeta?'arrow3':'arrow0';
+					ar.className=isMeta?'arrow3':'arrow0';
 					ar.innerHTML='<img src="arrow.png"></img>';
 					//ar.addEventListener('click',linef,false);
 
 					ar.style.top=px(y-6);
-					ar.style.left=px(conns[c].x+(conns[c].isMeta?0:conns[c].w-8));
+					ar.style.left=px(conns[c].x+(isMeta?0:conns[c].w-8));
 					ar.style.backgroundColor=conns[c].color;
 					container.appendChild(ar);
 				}
