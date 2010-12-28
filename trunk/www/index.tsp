@@ -101,9 +101,16 @@ div.arrowText,div.placeHolder
 {
 	float:left;
 	clear:left;
+	z-index:5;
+	position:relative;
+	-moz-border-radius: 5px;
+	border-radius: 5px;	
+	padding:1px 4px 1px 4px;
 }
 div.placeHolder
 {
+	float:left;
+	clear:left;
 	height:25px;
 }
 div.line,div.shortlineHor,div.shortlineVert

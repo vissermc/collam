@@ -124,41 +124,41 @@ function px(v)
 			box.style.marginLeft=px(boxOffset);
 			var linef=function(props,box) { return function(event) { arrowClick(props,box); event.stopPropagation(); } }(props,box);
 			elemCounter++;
+			var arrowText=null;
+			var connOffset=isMeta?parentOffset+lineWidth+30:parentOffset+lineOffset+(lineMargin)*(backwards?i: tree.length-i-1)+lineOffset;
+			if (props[ixArrowText]!=null)
+			{	arrowText=document.createElement("div");
+				arrowText.className='arrowText';
+				arrowText.style.marginTop=px(!backwards&&(props[ixArrowMode]&1)&&i==0?10:0);
+				arrowText.style.marginLeft=px(connOffset-28);
+				arrowText.innerHTML=props[ixArrowText];
+				arrowText.style.backgroundColor=props[ixArrowColor];
+				//arrowText.style.textShadow="black 0px 0px 1px";
+			}
 			if (isMeta)			
 			{	var placeHolder=document.createElement("div");
 				placeHolder.className='placeHolder';
 				placeHolder.id='ph'+id;
 				container.appendChild(placeHolder);
-				conns.push({'x':parentOffset+lineWidth,'w':30,'d':placeHolder.id,'s':box.id,'isMeta':true,'color':props[ixArrowColor] });
-				genItems(props[ixMetaChildren],backwards,lineOffset+lineWidth,true);
+				container.appendChild(arrowText);	
+				conns.push({'x':parentOffset+lineWidth,'w':30,'d':placeHolder.id,'s':box.id,'isMeta':true,'color':props[ixArrowColor],'arrow':true });
+				genItems(props[ixMetaChildren],backwards,connOffset,true);
 				container.appendChild(box);
 				genItems(props[ixChildren],backwards,boxOffset,false,box.id);
 				return;
 			}
-			var connOffset=parentOffset+lineOffset+(lineMargin)*(backwards?i: tree.length-i-1)+lineOffset;
-			conns.push({'x':connOffset,'s':parentId,'w':boxOffset-connOffset+20,'d':box.id,'isMeta':false,'color':props[ixArrowColor] });
+			conns.push({'x':connOffset,'s':parentId,'w':boxOffset-connOffset+20,'d':box.id,'isMeta':false,'color':props[ixArrowColor],'arrow':props[ixArrowMode]&1 });
 			if (backwards)
 			{	genItems(props[ixChildren],backwards,boxOffset,false,box.id);
 				container.appendChild(box);
 				genItems(props[ixMetaChildren],backwards,connOffset,true);
+				if (arrowText!=null)
+					container.appendChild(arrowText);	
 			}
-			
-			if (props[ixArrowText]!=null)
-			{	var arrowText=document.createElement("div");
-				arrowText.className='arrowText';
-				arrowText.style.marginLeft=px(connOffset);
-				arrowText.innerHTML=props[ixArrowText];
-				arrowText.style.color=props[ixArrowColor];
-				//arrowText.style.textShadow="black 0px 0px 1px";
-				container.appendChild(arrowText);	
-			}
-			/*{
-				var j;
-				for(j in el)
-					container.appendChild(el[j]);
-			}*/
-			if (!backwards)
+			else
 			{	
+				if (arrowText!=null)
+					container.appendChild(arrowText);	
 				genItems(props[ixMetaChildren],backwards,connOffset,true);
 				container.appendChild(box);
 				genItems(props[ixChildren],backwards,boxOffset,false,box.id);
@@ -199,80 +199,33 @@ function px(v)
 				line.style.backgroundColor=conns[c].color;//"#334455";
 				container.appendChild(line);
 			}
-			if (backwards)
+			if(conns[c].arrow)
 			{
-				var ar=document.createElement("div");
-				ar.className=conns[c].isMeta?'arrow3':'arrow0';
-				ar.innerHTML='<img src="arrow.png"></img>';
-				//ar.addEventListener('click',linef,false);
+				if (backwards)
+				{
+					var ar=document.createElement("div");
+					ar.className=conns[c].isMeta?'arrow3':'arrow0';
+					ar.innerHTML='<img src="arrow.png"></img>';
+					//ar.addEventListener('click',linef,false);
 
-				ar.style.top=px(y-6);
-				ar.style.left=px(conns[c].x+(conns[c].isMeta?0:conns[c].w-8));
-				ar.style.backgroundColor=conns[c].color;
-				container.appendChild(ar);
-			}
-			else
-			{
-				var ar=document.createElement("div");
-				ar.className='arrow1';
-				ar.innerHTML='<img src="arrow.png"></img>';
-				//ar.addEventListener('click',linef,false);
+					ar.style.top=px(y-6);
+					ar.style.left=px(conns[c].x+(conns[c].isMeta?0:conns[c].w-8));
+					ar.style.backgroundColor=conns[c].color;
+					container.appendChild(ar);
+				}
+				else
+				{
+					var ar=document.createElement("div");
+					ar.className='arrow1';
+					ar.innerHTML='<img src="arrow.png"></img>';
+					//ar.addEventListener('click',linef,false);
 
-				ar.style.top=px(y);
-				ar.style.left=px(conns[c].x-6);
-				ar.style.backgroundColor=conns[c].color;
-				container.appendChild(ar);
+					ar.style.top=px(y);
+					ar.style.left=px(conns[c].x-6);
+					ar.style.backgroundColor=conns[c].color;
+					container.appendChild(ar);
+				}
 			}
-		}
-	}
-	function genLines(tree,parentBox)
-	{
-		var i;
-		var subOffset=(lineMargin+lineWidth)*tree.length+lineOffset;
-		if (parentBox.offsetWidth<subOffset)
-			parentBox.style.width = px(subOffset);
-		var offset=subOffset+parentBox.offsetLeft;
-		for(i=0; i<tree.length; i++)
-		{
-			var props=tree[i];
-			var id=getIdPostfix(backwards);
-			var eb=document.getElementById("b"+id);
-			var hh=(eb.offsetHeight-4)/(props[ixArrowMode]&4?3:2);
-			var left=parentBox.offsetLeft+lineOffset+lineMargin*(backwards?i: tree.length-i-1);
-			var ehl=document.getElementById("hl"+id);
-			var evl=document.getElementById("vl"+id);
-			ehl.style.backgroundColor=evl.style.backgroundColor=props[ixArrowColor];
-			evl.style.left=ehl.style.left=px(left);
-			ehl.style.width=px(offset-left);
-			ehl.style.top=px(eb.offsetTop+hh);
-			evl.style.top=px(backwards?ehl.offsetTop:parentBox.offsetTop+parentBox.offsetHeight);
-			evl.style.height=px(backwards?parentBox.offsetTop-ehl.offsetTop:ehl.offsetTop-evl.offsetTop);
-/*			if (props[3]&1)
-			{	var ar=document.getElementById(ar0_'+id);
-				ar.style.top=px(backwards?ehl.offsetTop-7:parentBox.offsetTop+parentBox.offsetHeight-10);
-				ar.style.left=px(backwards?offset-8:left-6);
-				ar.style.backgroundColor=props[4];
-			}*/
-			if (props[ixArrowMode]&1)
-			{	var ar=document.getElementById('ar0_'+id);
-				ar.style.top=px(ehl.offsetTop-7);
-				ar.style.left=px(offset-8);
-				ar.style.backgroundColor=props[ixArrowColor];
-			}
-			if (props[ixArrowMode]&2)
-			{	var ar=document.getElementById('ar1_'+id);
-				ar.style.top=px(backwards?parentBox.offsetTop-8 : parentBox.offsetTop+parentBox.offsetHeight);
-				ar.style.left=px(left-6);
-				ar.style.backgroundColor=props[ixArrowColor];
-			}
-			if (props[ixArrowMode]&4)
-			{	var shl=document.getElementById('shl'+id);
-				shl.style.top=px(ehl.offsetTop+10);
-				shl.style.left=px(offset-shl.offsetWidth);
-				shl.style.backgroundColor=props[ixColor];
-			}
-			elemCounter++;
-			genLines(props[ixChildren],eb);
 		}
 	}
 	function fillSpider(target,spider)
