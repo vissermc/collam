@@ -1,3 +1,4 @@
+showProbabilies=false;
 
 ixUrlTail=0;ixType=1;ixText=2;ixProp=3;ixColor=4;ixArrowMode=5;ixArrowColor=6;ixArrowUrlTail=7;ixArrowText=8;ixMetaChildren=9;ixChildren=10;
 
@@ -57,22 +58,14 @@ function makeItemBox(props)
 	var b=document.createElement("div");
 	b.className='box';
 	b.style.backgroundColor=props[ixColor];
-	if (props[ixArrowMode]&8)
-	{
-		line=document.createElement("div");
-		e=document.createElement("div");
-		e.className='shortlineVert';
-		e.style.backgroundColor=props[ixColor];
-		line.appendChild(e);
-		line.className='shortlineTop';
-		b.appendChild(line);
-		b.style.marginTop="10px";
-	}
+	if (showProbabilies)
 	{
 		e=document.createElement("div");
 		e.className='probabilityBox';
 		e.innerHTML=props[ixProp];
 		b.appendChild(e);
+	}
+	{
 		e=document.createElement("div");
 		e.className='itemText';
 		e.innerHTML=props[ixText];
@@ -81,17 +74,6 @@ function makeItemBox(props)
 	b.addEventListener('click',function(event) { itemClick(props,b); event.stopPropagation();},false);
 //	b.onclick=function() {  return false;}
 
-	if (props[ixArrowMode]&16)
-	{
-		line=document.createElement("div");
-		e=document.createElement("div");
-		e.className='shortlineVert';
-		e.style.backgroundColor=props[ixColor];
-		line.appendChild(e);
-		line.className='shortlineBottom';
-		b.appendChild(line);
-		b.style.marginBottom="10px";
-	}
 	return b;
 }
 
@@ -122,6 +104,7 @@ function px(v)
 			var box=makeItemBox(props);
 			box.id='b'+id;
 			box.style.marginLeft=px(boxOffset);
+			box.style.minWidth=px(lineMargin*props[ixChildren].length);
 			var linef=function(props,box) { return function(event) { arrowClick(props,box); event.stopPropagation(); } }(props,box);
 			elemCounter++;
 			var arrowText=null;

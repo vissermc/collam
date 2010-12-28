@@ -90,6 +90,7 @@ div.box
 {
 	float:left;
 	clear:left;
+	text-align:center;
 	background-color:#88ff88;
 	padding:5px;
 	margin:5px 0px 5px 0px;
