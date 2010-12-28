@@ -77,6 +77,7 @@ tryDestroyItem=?
 	$.calcProbability=?<><[Connection]this>
 	(
 		.p=getConnData(this).probability;
+		this.arguments%!(p*=$.data->calcProbability(););
 		(p<0?1.0:0.0)+(p*this.argument->calcProbability())
 	);
 	$.getColor=?<><[Connection]this>
