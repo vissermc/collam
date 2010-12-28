@@ -88,7 +88,7 @@ tryDestroyItem=?
 	$.getText=?<><[Connection]this>
 	(
 		.p=getConnData(this).probability;
-		this.conclusion.class==propositionClass?(p>=0?'supports':'challenges'):(p==1.0?():''(p))
+		{:this.conclusion.class}@{:&connectionClass,&propositionClass}?(p>=0?'supports':'challenges'):(p==1.0?() :''(p))
 	);
 );
 acceptItemChange=?<[Item]i>
@@ -173,7 +173,7 @@ tryDestroyConnection =?
 &[Item.class]orClass.!
 (
 	*$=itemClass;
-	$.new = ?itemClass.new(orClass,());
+	$.new = ?itemClass.new(&orClass,());
 	$.calcProbability = ? <><[Item]this>
 	(	.m=1.0;
 		getValidArgConnections(this):!(m*=1.0-$->calcProbability(););
@@ -186,7 +186,7 @@ tryDestroyConnection =?
 &[Item.class]andClass.!
 (
 	*$=itemClass;
-	$.new = ?itemClass.new(andClass,());
+	$.new = ?itemClass.new(&andClass,());
 	$.type = 'and';
 	$.getText = ? 'And';
 );
@@ -253,7 +253,7 @@ removeItem=?<[Item]item>
 &[Item.class]propositionClass.!
 (
 	*$=itemClass;
-	$.new = ? <text> itemClass.new(propositionClass,{text,1.0});
+	$.new = ? <text> itemClass.new(&propositionClass,{text,1.0});
 	$.calcProbability = ? <><[Item]this>
 	(	getPropData(this).probability * (this.!itemClass.calcProbability())
 	);
@@ -331,12 +331,11 @@ getJSONItemConclusionTree=?<[Item]item,level>
 (
 	level ? ( 
 		//.c=item->getColor();
-		.ap=item->hasArrowPoint;
 		item.conclusions %!
 		(
 			$.key.class!=connectionClass?
 			(	[Item]($.key);
-				getItemJSONProps($.key)+{ap|(@$.key.arguments>1?4)|(level==1&&$.key.conclusions?8),$.data->getColor(),urlTailForConnection(item,$.key), $.data->getText(), getJSONArgumentTree($.data,level-1), getJSONItemConclusionTree($.key,level-1)}
+				getItemJSONProps($.key)+{($.key.class==&propositionClass)|(@$.key.arguments>1?4)|(level==1&&$.key.conclusions?8),$.data->getColor(),urlTailForConnection(item,$.key), $.data->getText(), getJSONArgumentTree($.data,level-1), getJSONItemConclusionTree($.key,level-1)}
 			)
 		)
 	)
@@ -346,10 +345,12 @@ getJSONItemConclusionTree=?<[Item]item,level>
 getJSONArgumentTree=?<[TrackedObject]object,level>
 (
 	level ? 
-	(	getValidArgs(object)%!
+	(	
+		.ap=object.class==&propositionClass;//->hasArrowPoint;
+		getValidArgs(object)%!
 		(
 			.l=getItemJSONProps($.key);
-			l+{($.key->hasArrowPoint*2) | (@$.key.conclusions>1?4)|(level==1&&getValidArgs($.key)?16), $.data->getColor(),urlTailForConnection($.key,object), $.data->getText(),getJSONArgumentTree($.data,level-1),getJSONArgumentTree($.key,level-1)}
+			l+{ap | (@$.key.conclusions>1?4)|(level==1&&getValidArgs($.key)?16), $.data->getColor(),urlTailForConnection($.key,object), $.data->getText(),getJSONArgumentTree($.data,level-1),getJSONArgumentTree($.key,level-1)}
 		)
 	)
 );
@@ -373,7 +374,8 @@ collam_init=?
 	[Item].p4=propositionClass.new('arg 2');
 	[Item].p5=propositionClass.new('arg 3');
 	.p6=orClass.new();
-	.p7=propositionClass.new('arg 4');
+	[Item].p7=propositionClass.new('arg 4');
+	.p8=propositionClass.new('arg 5');
 	getPropData(p4).probability=0.2;
 	connectItems(p2,p1,1);
 	connectItems(p3,p6,1);
@@ -381,6 +383,7 @@ collam_init=?
 	connectItems(p6,p2,1);
 	connectItems(p4,p2,-1);
 	connectItems(p7,p5.conclusions[p6],-1);
+	connectItems(p8,p7.conclusions[p5.conclusions[p6]],1);
 	currentItem=p2;
 );
 
