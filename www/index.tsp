@@ -102,7 +102,7 @@ div.arrowText,div.placeHolder
 {
 	float:left;
 	clear:left;
-	z-index:5;
+	z-index:2;
 	position:relative;
 	-moz-border-radius: 5px;
 	border-radius: 5px;	
