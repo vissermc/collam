@@ -104,75 +104,46 @@ function px(v)
 {
 	var instanceCounter=0;
 	var elemCounter;
-	var backwards;
 	var container;
 	var conns;//x,w,s,d,isMeta,color
-	function getIdPostfix()
+	function getIdPostfix(backwards)
 	{	return ""+instanceCounter+"_"+backwards+"_"+elemCounter;
 	}
-	function genItems(tree,parentOffset,isMeta,parentId)
+	function genItems(tree,backwards,parentOffset,isMeta,parentId)
 	{
 		var i;
 		var boxOffset=parentOffset;
 		if (!isMeta)
-		{	var subOffset=lineMargin*tree.length+lineOffset;
-			boxOffset+=subOffset;
+		{	boxOffset+=lineMargin*tree.length+lineOffset;
 		}
+		//else
+		//	boxOffset+=lineOffset+lineWidth;
 		for(i in tree)
 		{
-			var id=getIdPostfix();
+			var id=getIdPostfix(backwards);
 			var props=tree[i];
 			var box=makeItemBox(props);
 			box.id='b'+id;
 			box.style.marginLeft=px(boxOffset);
 			var linef=function(props,box) { return function(event) { arrowClick(props,box); event.stopPropagation(); } }(props,box);
+			elemCounter++;
+			if (isMeta)			
+			{	var placeHolder=document.createElement("div");
+				placeHolder.className='placeHolder';
+				placeHolder.id='ph'+id;
+				container.appendChild(placeHolder);
+				conns.push({'x':parentOffset+lineWidth,'w':30,'d':placeHolder.id,'s':box.id,'isMeta':true,'color':props[ixArrowColor] });
+				genItems(props[ixMetaChildren],backwards,lineOffset+lineWidth,true);
+				container.appendChild(box);
+				genItems(props[ixChildren],backwards,boxOffset,false,box.id);
+				return;
+			}
 			var connOffset=parentOffset+lineOffset+(lineMargin)*(backwards?i: tree.length-i-1)+lineOffset;
 			conns.push({'x':connOffset,'s':parentId,'w':boxOffset-connOffset+20,'d':box.id,'isMeta':false,'color':props[ixArrowColor] });
-			/*if (props[ixArrowMode]&1)
-			{
-				var ar=document.createElement("div");
-				ar.className='arrow0';
-				ar.id='ar0_'+id;
-				ar.innerHTML='<img src="arrow.png"></img>';
-				ar.addEventListener('click',linef,false);
-				el.push(ar);
-			}
-			if (props[ixArrowMode]&2)
-			{
-				var ar=document.createElement("div");
-				ar.className=backwards?'arrow2':'arrow1';
-				ar.id='ar1_'+id;
-				ar.innerHTML='<img src="arrow.png"></img>';
-				ar.onclick=linef;
-				el.push(ar);
-			}
-			{
-				var line=document.createElement("div");
-				line.className='line';
-				line.id='vl'+id;
-				line.onclick=linef;
-				el.push(line);
-				line=document.createElement("div");
-				line.className='line';
-				line.id='hl'+id;
-				line.onclick=linef;
-				el.push(line);
-				if (props[ixArrowMode]&4)
-				{
-					line=document.createElement("div");
-					line.className='shortlineHor';
-					line.id='shl'+id;
-					el.push(line);
-				}
-			}*/
-			//TODO: ixArrowText
-			elemCounter++;
-			if (isMeta)
-				boxOffset+=lineOffset;
 			if (backwards)
-			{	genItems(props[ixChildren],boxOffset,false,box.id);
-				genItems(props[ixMetaChildren],boxOffset,true,box.id);
+			{	genItems(props[ixChildren],backwards,boxOffset,false,box.id);
 				container.appendChild(box);
+				genItems(props[ixMetaChildren],backwards,connOffset,true);
 			}
 			
 			if (props[ixArrowText]!=null)
@@ -191,9 +162,9 @@ function px(v)
 			}*/
 			if (!backwards)
 			{	
+				genItems(props[ixMetaChildren],backwards,connOffset,true);
 				container.appendChild(box);
-				genItems(props[ixMetaChildren],boxOffset,true,box.id);
-				genItems(props[ixChildren],boxOffset,false,box.id);
+				genItems(props[ixChildren],backwards,boxOffset,false,box.id);
 			}
 			//document.write();
 		}
@@ -204,15 +175,15 @@ function px(v)
 		{
 			var s=document.getElementById(conns[c].s);
 			var d=document.getElementById(conns[c].d);
-			var backwards=s.offsetTop>d.offsetTop;
+			var backwards=s!=null && s.offsetTop>d.offsetTop;
 			var yd=d.offsetTop+d.offsetHeight/2;
-			var y=backwards ? yd : s.offsetTop+s.offsetHeight;
+			var y=s==null?yd : ( backwards ? yd : s.offsetTop+s.offsetHeight );
 			var h=(backwards ? s.offsetTop : yd ) - y;
 			{
 				var line=document.createElement("div");
 				line.className='line';
 				//todo line.onclick=linef;
-				line.style.left=px(conns[c].x);
+				line.style.left=px(conns[c].x+(conns[c].isMeta?conns[c].w:0));
 				line.style.width=px(lineWidth);//px(conns[c].w);
 				//alert(conns[c].s);
 				//alert(y);
@@ -234,12 +205,12 @@ function px(v)
 			if (backwards)
 			{
 				var ar=document.createElement("div");
-				ar.className='arrow0';
+				ar.className=conns[c].isMeta?'arrow3':'arrow0';
 				ar.innerHTML='<img src="arrow.png"></img>';
 				//ar.addEventListener('click',linef,false);
 
 				ar.style.top=px(y-6);
-				ar.style.left=px(conns[c].x+conns[c].w-8);
+				ar.style.left=px(conns[c].x+(conns[c].isMeta?0:conns[c].w-8));
 				ar.style.backgroundColor=conns[c].color;
 				container.appendChild(ar);
 			}
@@ -267,7 +238,7 @@ function px(v)
 		for(i=0; i<tree.length; i++)
 		{
 			var props=tree[i];
-			var id=getIdPostfix();
+			var id=getIdPostfix(backwards);
 			var eb=document.getElementById("b"+id);
 			var hh=(eb.offsetHeight-4)/(props[ixArrowMode]&4?3:2);
 			var left=parentBox.offsetLeft+lineOffset+lineMargin*(backwards?i: tree.length-i-1);
@@ -313,9 +284,8 @@ function px(v)
 		conns=[];
 		container=document.createElement("div");
 		elemCounter=0;
-		backwards=1;
 		var cid="centre"+instanceCounter;
-		genItems(spider[0],0,false,cid);
+		genItems(spider[0],true,0,false,cid);
 		var bid;
 		var cbox;
 		{
@@ -328,8 +298,7 @@ function px(v)
 			container.appendChild(cbox);
 		}
 		elemCounter=0;
-		backwards=0;
-		genItems(spider[2],0,false,cid);
+		genItems(spider[2],false,0,false,cid);
 		elemCounter=0;
 		target.appendChild(container);
 		//alert(document.getElementById(cid).offsetTop);

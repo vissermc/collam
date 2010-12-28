@@ -97,10 +97,14 @@ div.box
 	-moz-border-radius: 5px;
 	border-radius: 5px;	
 }
-div.arrowText
+div.arrowText,div.placeHolder
 {
 	float:left;
 	clear:left;
+}
+div.placeHolder
+{
+	height:25px;
 }
 div.line,div.shortlineHor,div.shortlineVert
 {
@@ -127,7 +131,7 @@ div.shortlineTop
 	position:relative;
 	top:-12px;
 }
-div.arrow0, div.arrow1, div.arrow2
+div.arrow0, div.arrow1, div.arrow2,div.arrow3
 {
 	z-index:2;
 	margin:0px;
@@ -138,7 +142,7 @@ div.arrow0, div.arrow1, div.arrow2
 	overflow:hidden;
 	cursor: pointer;
 }
-div.arrow0
+div.arrow0,div.arrow3
 {
 	width:8px;height:17px;
 }
@@ -154,6 +158,7 @@ div.arrow2 img
 {
 	position:relative;bottom:9px;
 }
+
 div.probabilityBox
 {
 	border: 1px solid #aaaaaa;
