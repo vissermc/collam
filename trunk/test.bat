@@ -17,6 +17,7 @@ include(httpPath+'tyledHttp.tyle');
 trace('finish init');
 ///// main
 //putline(indent(.?getJSONTriple(currentItem,-1)));
+getJSONTriple(currentItem,-1);
 //act(0,0,1000,0.3);
 ///// end
 trace('done');

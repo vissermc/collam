@@ -1,4 +1,14 @@
 /*
+Bruno is happy and healthy
+	+ and
+		Bruno is wagging his tail
+		Bruno is a dog
+		A happy dog is wagging its tail
+			- Sometimes, a dog is wagging its tail in anticipation instead
+	- Bruno's boss is not happy now
+		<- A dogs happiness is not affected by the emotional state of its boss
+	+ Bruno had his health check yesterday and nothing was found
+
 https://collam.googlecode.com/svn/trunk/
 |+-->prop
 ||
@@ -77,8 +87,10 @@ tryDestroyItem=?
 	$.calcProbability=?<><[Connection]this>
 	(
 		.p=getConnData(this).probability;
-		this.arguments%!(p*=$.data->calcProbability(););
-		(p<0?1.0:0.0)+(p*this.argument->calcProbability())
+		.m=p;
+		//putline(.?{$.data->calcProbability()}); putline(.?{this.argument->getText(),this.conclusion->getText()});
+		this.arguments%!(m*=$.data->calcProbability(););
+		(p<0?1.0:0.0)+(m*this.argument->calcProbability())
 	);
 	$.getColor=?<><[Connection]this>
 	(
@@ -89,7 +101,7 @@ tryDestroyItem=?
 	$.getText=?<><[Connection]this>
 	(
 		.p=getConnData(this).probability;
-		{:this.conclusion.class}@{:&connectionClass,&propositionClass}?(p>=0?'supports':'challenges'):(p==1.0?() :''(p))
+		{:this.conclusion.class}@{:&connectionClass,&propositionClass}?(p>=0?'supports'+(p==1.0?'':' '+p):'challenges'+(p==-1.0?'':' '+-p)):(p==1.0?() :''(p))
 	);
 );
 acceptItemChange=?<[Item]i>
@@ -162,12 +174,12 @@ tryDestroyConnection =?
 		this.arguments:!($.conclusions:-=this;); // force deletion of connections!
 	);
 	$.getColor =? <><[Item]this>
-	(
-		getCSSColor(this->calcProbability(),{0,1,1})
+	(	.p;
+		getCSSColor(p=this->calcProbability(),p<0?{1,0,0}:{0,1,0})
 	);
 	$.hasArrowPoint = 0;
 	$.getTagText=?<prop><[Item]this>
-	(	''{'&#x2116;&nbsp;',this.id,'&nbsp;&nbsp;P&nbsp;',prop.!$==1.0?1:$}
+	(	''{'&#x2116;&nbsp;',this.id,prop!=1.0?{'&nbsp;&nbsp;P&nbsp;',prop}}
 	);
 );
 
@@ -181,7 +193,7 @@ tryDestroyConnection =?
 		1.0-m
 	);
 	$.type = 'or';
-	$.getText = ? 'Or';
+	$.getText = ? 'or';
 );
 
 &[Item.class]andClass.!
@@ -189,7 +201,7 @@ tryDestroyConnection =?
 	*$=itemClass;
 	$.new = ?itemClass.new(&andClass,());
 	$.type = 'and';
-	$.getText = ? 'And';
+	$.getText = ? 'and';
 );
 
 connectItems=?<[Item]argument,[TrackedObject]conclusion, strength>
@@ -263,7 +275,11 @@ removeItem=?<[Item]item>
 	);
 	$.getTagText=?<prop><[Item]this>
 	(	.p=getPropData(this).probability;
-		(this.!itemClass.getTagText(prop))+(p!=prop ? '&nbsp;('+p+')')
+		(this.!itemClass.getTagText(prop))+(p!=1.0 ? '&nbsp;('+p+')')
+	);
+	$.getColor =? <><[Item]this>
+	(
+		getCSSColor(this->calcProbability(),{0,1,1})
 	);
 	$.hasArrowPoint = 1;
 	$.type = 'prop';
@@ -332,13 +348,13 @@ getJSONItemConclusionTree=?<[Item]item,level>
 (
 	level ? ( 
 		//.c=item->getColor();
-		item.conclusions %!
+		{:}(item.conclusions %!
 		(
 			$.key.class!=connectionClass?
 			(	[Item]($.key);
-				getItemJSONProps($.key)+{($.key.class==&propositionClass)|(@$.key.arguments>1?4)|(level==1&&$.key.conclusions?8),$.data->getColor(),urlTailForConnection(item,$.key), $.data->getText(), getJSONArgumentTree($.data,level-1), getJSONItemConclusionTree($.key,level-1)}
+				{$.key.id,getItemJSONProps($.key)+{($.key.class==&propositionClass)|(@$.key.arguments>1?4)|(level==1&&$.key.conclusions?8),$.data->getColor(),urlTailForConnection(item,$.key), $.data->getText(), getJSONArgumentTree($.data,level-1), getJSONItemConclusionTree($.key,level-1)}}
 			)
-		)
+		))%!$.data
 	)
 // ixUrlTail=0;ixType=1;ixText=2;ixProp=3;ixColor=4;ixArrowMode=5;ixArrowColor=6;ixLineUrlTail=7;ixLineText=8;ixMetaChildren=9;ixChildren=10;
 );
@@ -348,11 +364,11 @@ getJSONArgumentTree=?<[TrackedObject]object,level>
 	level ? 
 	(	
 		.ap=object.class==&propositionClass;//->hasArrowPoint;
-		getValidArgs(object)%!
+		{:}(getValidArgs(object)%!
 		(
 			.l=getItemJSONProps($.key);
-			l+{ap | (@$.key.conclusions>1?4)|(level==1&&getValidArgs($.key)?16), $.data->getColor(),urlTailForConnection($.key,object), $.data->getText(),getJSONArgumentTree($.data,level-1),getJSONArgumentTree($.key,level-1)}
-		)
+			{$.key.id,l+{ap | (@$.key.conclusions>1?4)|(level==1&&getValidArgs($.key)?16), $.data->getColor(),urlTailForConnection($.key,object), $.data->getText(),getJSONArgumentTree($.data,level-1),getJSONArgumentTree($.key,level-1)}}
+		))%!$.data
 	)
 );
 
@@ -364,12 +380,52 @@ getJSONTriple=?<[Item]center,level>
 	getJSONArgumentTree(center,level-1)
 );
 
+appendInDepth=?<struct,depth,item>
+(
+	.s=struct;
+	ctup(depth):!
+	(	s=&s[-1][-1];
+	);
+	s+={{item,{}}};
+);
+
+processStruct=?<struct,[Item]parent>
+(
+	.elems=struct[0].!fetch(`^(<??)([+\-]??)({[01]\.??[0-9]**}??) **({\[[01]\.??[0-9]**\]}??) **(.++)`)[0];
+	putline(.?elems);
+	[Item].item=`^or$`i@elems[4]?orClass.new():(`^and$`i@elems[4]? andClass.new() : propositionClass.new(elems[4]) ) ;
+	elems[3]!=''?(getPropData(item).probability=0.0(elems[3]<<1););
+	.strength=(elems[1]=='-'?-1.0:1.0) * (elems[2]=='' ? 1.0: 0.0(elems[2]));
+	elems[0]=='<'?
+	(	connectItems(item,parent.conclusions[parent.conclusions[:0]],strength);
+	) :
+	(
+		parent!=null?(connectItems(item,parent,strength););
+	);
+	struct[1]:!processStruct($,item);
+	item
+);
+
+parseTree=?<text>
+(
+	.struct={};
+	.lines=linesplit(text)-{''};
+	lines:!<line>
+	(
+		.tabs=@(line.!fetch(`^(\t**)`)[0][0]);
+		line<<=tabs;
+		appendInDepth(&struct,tabs,line);
+	);
+	processStruct(struct[0],null)
+);
+
 collam_init=?
 (
 	putline('Initializing Collam...');
 	nextID=1;
 	items={:};
-	.p1=propositionClass.new('final conclusion');
+	currentItem=parseTree(load(projectPath+'exampleTree.txt'));
+	/*.p1=propositionClass.new('final conclusion');
 	.p2=propositionClass.new('center conclusion');
 	.p3=propositionClass.new('arg 1');
 	[Item].p4=propositionClass.new('arg 2');
@@ -385,7 +441,7 @@ collam_init=?
 	connectItems(p4,p2,-1);
 	connectItems(p7,p5.conclusions[p6],-1);
 	connectItems(p8,p7.conclusions[p5.conclusions[p6]],1);
-	currentItem=p2;
+	currentItem=p2;*/
 );
 
 (
