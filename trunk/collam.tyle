@@ -1,13 +1,9 @@
 /*
-Bruno is happy and healthy
-	+ and
-		Bruno is wagging his tail
-		Bruno is a dog
-		A happy dog is wagging its tail
-			- Sometimes, a dog is wagging its tail in anticipation instead
-	- Bruno's boss is not happy now
-		<- A dogs happiness is not affected by the emotional state of its boss
-	+ Bruno had his health check yesterday and nothing was found
+
++ Meta-reasoning: Quite often it is not the argument that needs to rebutted, but the reasoning instead, i.e. the link between an argument and conclusion. Argument number 14 is an example of a such a meta-counter-argument.
++ Compound arguments: Arguments link to different aspects of a conclusion, but sometimes some argument together link to one aspect. Such a composition is either a logical 'or' or a logical 'and'. Item No 2 is an example of an 'and'-composition. 
++ Calculated probabilities. Probabilities of conclusions being correct are calculated, where the rule is that the probability is only 1 (i.e. correct), when all supporting arguments are correct/proven, and all counter-arguments are incorrect/unproven. One totally incorrect supporting argument or one correct counter-arguments already make the conclusion incorrect (probability 0).
++ Coloring: Colors of propositions (i.e. arguments or conclusions) are ranged between bright blue (completely proven or true) and grey (completely unproven or false). A supporting connection is between bright green and grey, while a challenging connection is between red and grey, depending on the strength of the connection.
 
 https://collam.googlecode.com/svn/trunk/
 |+-->prop
