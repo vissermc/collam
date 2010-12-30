@@ -92,7 +92,7 @@ function px(v)
 	{
 		var i;
 		var boxOffset=parentOffset;
-		if (!isMeta)
+		//if (!isMeta)
 		{	boxOffset+=lineMargin*tree.length+lineOffset;
 		}
 		//else
@@ -103,12 +103,16 @@ function px(v)
 			var props=tree[i];
 			var box=makeItemBox(props);
 			box.id='b'+id;
-			box.style.marginLeft=px(boxOffset);
 			box.style.minWidth=px(lineMargin*props[ixChildren].length);
 			var linef=function(props,box) { return function(event) { arrowClick(props,box); event.stopPropagation(); } }(props,box);
 			elemCounter++;
 			var arrowText=null;
-			var connOffset=isMeta?parentOffset+lineWidth+30:parentOffset+lineOffset+(lineMargin)*(backwards?i: tree.length-i-1)+lineOffset;
+			var offset=boxOffset;
+			var connOffset=parentOffset+lineOffset+(lineMargin)*(backwards?i: tree.length-i-1)+lineOffset-(isMeta?20:0);
+			var w=boxOffset-connOffset+20;
+			var minW=lineMargin*props[ixMetaChildren].length+10;
+			if (w<minW) { offset+=minW-w; w=minW; }
+			box.style.marginLeft=px(offset);
 			if (props[ixArrowText]!=null)
 			{	arrowText=document.createElement("div");
 				arrowText.className='arrowText';
@@ -120,21 +124,18 @@ function px(v)
 			}
 			if (isMeta)			
 			{	var placeHolder=document.createElement("div");
-				placeHolder.className='placeHolder';
-				placeHolder.id='ph'+id;
-				container.appendChild(placeHolder);
 				container.appendChild(arrowText);	
-				conns.push({'x':parentOffset+lineWidth,'w':30,'d':placeHolder.id,'s':box.id,'isMeta':true,'color':props[ixArrowColor],'arrow':true });
-				genItems(props[ixMetaChildren],backwards,connOffset,true);
 				container.appendChild(box);
-				genItems(props[ixChildren],backwards,boxOffset,false,box.id);
-				return;
+				conns.push({'x':connOffset,'w':w,'s':parentId,'d':box.id,'isMeta':true,'color':props[ixArrowColor],'arrow':true });
+				genItems(props[ixMetaChildren],false,offset,true);
+				genItems(props[ixChildren],backwards,offset,false,box.id);
+				continue;
 			}
-			conns.push({'x':connOffset,'s':parentId,'w':boxOffset-connOffset+20,'d':box.id,'isMeta':false,'color':props[ixArrowColor],'arrow':props[ixArrowMode]&1 });
+			conns.push({'x':connOffset,'s':parentId,'w':w,'d':box.id,'isMeta':false,'color':props[ixArrowColor],'arrow':props[ixArrowMode]&1 });
 			if (backwards)
-			{	genItems(props[ixChildren],backwards,boxOffset,false,box.id);
+			{	genItems(props[ixChildren],backwards,offset,false,box.id);
 				container.appendChild(box);
-				genItems(props[ixMetaChildren],backwards,connOffset,true);
+				genItems(props[ixMetaChildren],false,connOffset,true,box.id);
 				if (arrowText!=null)
 					container.appendChild(arrowText);	
 			}
@@ -142,9 +143,9 @@ function px(v)
 			{	
 				if (arrowText!=null)
 					container.appendChild(arrowText);	
-				genItems(props[ixMetaChildren],backwards,connOffset,true);
 				container.appendChild(box);
-				genItems(props[ixChildren],backwards,boxOffset,false,box.id);
+				genItems(props[ixMetaChildren],false,connOffset,true,box.id);
+				genItems(props[ixChildren],backwards,offset,false,box.id);
 			}
 			//document.write();
 		}
@@ -158,18 +159,15 @@ function px(v)
 			var backwards=s!=null && s.offsetTop>d.offsetTop;
 			var isMeta=conns[c].isMeta;
 			var yd=d.offsetTop+d.offsetHeight/2;
-			var y=s==null?yd : ( backwards ? yd : s.offsetTop+s.offsetHeight );
+			var y=s==null?yd : ( backwards ? yd : s.offsetTop+(isMeta?s.offsetHeight/2+lineWidth:s.offsetHeight) );
 			var h=(backwards ? s.offsetTop : yd ) - y;
-			if (1)
 			{
 				var line=document.createElement("div");
 				line.className='line';
 				//todo line.onclick=linef;
-				line.style.left=px(conns[c].x+(isMeta?conns[c].w:0));
+				line.style.left=px(conns[c].x);
 				line.style.width=px(lineWidth);//px(conns[c].w);
-				//alert(conns[c].s);
-				//alert(y);
-				var lineDown=isMeta||backwards?lineWidth:0;
+				var lineDown=backwards?lineWidth:0;
 				line.style.top=px(y+lineDown);
 				line.style.height=px(h-lineDown);
 				line.style.backgroundColor=conns[c].color;//"#334455";
@@ -179,60 +177,39 @@ function px(v)
 				var line=document.createElement("div");
 				line.className='line';
 				//todo line.onclick=linef;
-				line.style.left=px(conns[c].x+(isMeta?5:0));
+				line.style.left=px(conns[c].x);
 				line.style.width=px(conns[c].w-5);//px(conns[c].w);
-				line.style.top=px(yd-(!isMeta&&!backwards?10:0));
+				line.style.top=px(yd-(backwards?0:10));
 				line.style.height=px(10);
-				var borderRadius;
-				if (isMeta)
-				{	line.style.borderRight="5px solid";
+				line.style.borderLeft="5px solid";
+				if (backwards)
 					line.style.borderTop="5px solid";
-					borderRadius="0px 10px 10px 10px";
-				}
-				else 
-				{	line.style.borderLeft="5px solid";
-					if (backwards)
-					{	line.style.borderTop="5px solid";
-						borderRadius="10px 0px 10px 10px";
-						line.style.top=px(yd);
-					}
-					else
-					{	line.style.borderBottom="5px solid";
-						line.style.top=px(yd-10);
-						borderRadius="10px 10px 0px 10px";
-					}
-				}
-				line.style.MozBorderRadius=line.style.WebkitBorderRadius=line.style.borderRadius=borderRadius;
+				else
+					line.style.borderBottom="5px solid";
+				line.style.MozBorderRadius=line.style.WebkitBorderRadius=line.style.borderRadius=backwards?"10px 0px 10px 10px":"10px 10px 0px 10px";
 				line.style.borderColor=conns[c].color;//"#334455";
 				//line.style.backgroundColor=conns[c].color;//"#334455";
 				container.appendChild(line);
 			}
 			if(conns[c].arrow)
 			{
+				var ar=document.createElement("div");
+				ar.style.backgroundColor=conns[c].color;
+				ar.innerHTML='<img src="arrow.png"></img>';
+				//ar.addEventListener('click',linef,false);
 				if (backwards)
 				{
-					var ar=document.createElement("div");
-					ar.className=isMeta?'arrow3':'arrow0';
-					ar.innerHTML='<img src="arrow.png"></img>';
-					//ar.addEventListener('click',linef,false);
-
+					ar.className='arrow0';
 					ar.style.top=px(y-6);
-					ar.style.left=px(conns[c].x+(isMeta?0:conns[c].w-8));
-					ar.style.backgroundColor=conns[c].color;
-					container.appendChild(ar);
+					ar.style.left=px(conns[c].x+(conns[c].w-8));
 				}
 				else
 				{
-					var ar=document.createElement("div");
 					ar.className='arrow1';
-					ar.innerHTML='<img src="arrow.png"></img>';
-					//ar.addEventListener('click',linef,false);
-
 					ar.style.top=px(y);
 					ar.style.left=px(conns[c].x-6);
-					ar.style.backgroundColor=conns[c].color;
-					container.appendChild(ar);
 				}
+				container.appendChild(ar);
 			}
 		}
 	}
