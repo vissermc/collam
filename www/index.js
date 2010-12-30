@@ -1,4 +1,4 @@
-showProbabilies=false;
+showProbabilities=true;//false;
 
 ixUrlTail=0;ixType=1;ixText=2;ixProp=3;ixColor=4;ixArrowMode=5;ixArrowColor=6;ixArrowUrlTail=7;ixArrowText=8;ixMetaChildren=9;ixChildren=10;
 
@@ -58,7 +58,7 @@ function makeItemBox(props)
 	var b=document.createElement("div");
 	b.className='box';
 	b.style.backgroundColor=props[ixColor];
-	if (showProbabilies)
+	if (showProbabilities)
 	{
 		e=document.createElement("div");
 		e.className='probabilityBox';
@@ -183,24 +183,26 @@ function px(v)
 				line.style.width=px(conns[c].w-5);//px(conns[c].w);
 				line.style.top=px(yd-(!isMeta&&!backwards?10:0));
 				line.style.height=px(10);
+				var borderRadius;
 				if (isMeta)
 				{	line.style.borderRight="5px solid";
 					line.style.borderTop="5px solid";
-					line.style.MozBorderRadius="0px 10px 10px 10px";
+					borderRadius="0px 10px 10px 10px";
 				}
 				else 
 				{	line.style.borderLeft="5px solid";
 					if (backwards)
 					{	line.style.borderTop="5px solid";
-						line.style.MozBorderRadius="10px 10px 0px 10px";
+						borderRadius="10px 0px 10px 10px";
 						line.style.top=px(yd);
 					}
 					else
 					{	line.style.borderBottom="5px solid";
 						line.style.top=px(yd-10);
-						line.style.MozBorderRadius="10px 10px 0px 10px";
+						borderRadius="10px 10px 0px 10px";
 					}
 				}
+				line.style.MozBorderRadius=line.style.WebkitBorderRadius=line.style.borderRadius=borderRadius;
 				line.style.borderColor=conns[c].color;//"#334455";
 				//line.style.backgroundColor=conns[c].color;//"#334455";
 				container.appendChild(line);
