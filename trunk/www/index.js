@@ -127,8 +127,8 @@ function px(v)
 				if (arrowText!=null)
 					container.appendChild(arrowText);	
 				container.appendChild(box);
-				genItems(props.metaChildren,false,connOffset-20,true,box.id);
 				genItems(props.children,backwards,offset,false,box.id);
+				genItems(props.metaChildren,false,connOffset-20,true,box.id);
 			}
 			//document.write();
 		}
