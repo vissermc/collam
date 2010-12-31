@@ -46,10 +46,10 @@ curTracker; // ==() for latest state.
 [Change={who,when,isPrivateEdit}];
 [TrackedObjectState={isDeleted,[Change]change,data}];
 [TrackedObjectStates=Conclusion=>TrackedObjectState];
-[TrackedObject={[{new,destroy,getText,unuse,calcProbability,getColor,getConclusions}]class,id,[TrackedObjectStates]states,[Item=>Connection]arguments}];
+[TrackedObject={[{new,destroy,getText,unuse,calcProbability,getColor,getConclusions,hasArrowPoint}]class,id,[TrackedObjectStates]states,[Item=>Connection]arguments}];
 [Connection=TrackedObject+{ [Item]argument, [TrackedObject]conclusion}];
 [Item=TrackedObject+{[TrackedObject=>Connection]conclusions}];
-[Item.class=TrackedObject.class+{type,getTagText,hasArrowPoint,serialize}];
+[Item.class=TrackedObject.class+{type,getTagText,serialize}];
 [ConnData={probability}];
 [PropData={text,probability}];
 [Project={[=>Conclusion]conclusions,[=>Item]items,nextID}];
@@ -78,6 +78,7 @@ tryDestroyItem=?
 		this.conclusion.arguments:-=this.argument;
 		this.metaArgs:!($.conclusions:-=this;);
 	);
+	$.hasArrowPoint=1;
 	$.getConclusions = ? <><[Connection]this> {:this.conclusion};
 	$.unuse=$.destroy;
 	$.calcProbability=?<><[Connection]this>
@@ -97,7 +98,7 @@ tryDestroyItem=?
 	$.getText=?<><[Connection]this>
 	(
 		.p=getConnData(this).probability;
-		{:this.conclusion.class}@{:&connectionClass,&propositionClass}?(p>=0?'supports'+(p==1.0?'':' '+p):'challenges'+(p==-1.0?'':' '+-p)):(p==1.0?() :''(p))
+		this->hasArrowPoint?(p>=0?'supports'+(p==1.0?'':' '+p):'challenges'+(p==-1.0?'':' '+-p)):(p==1.0?() :''(p))
 	);
 );
 acceptItemChange=?<[Item]i>
@@ -334,9 +335,12 @@ gatherConclusions=?<[TrackedObject]root,includeSelf,includeMeta>
 	s
 );
 
+// ixUrlTail=0;ixType=1;ixText=2;ixProp=3;ixColor=4;ixArrowMode=5;ixArrowColor=6;ixLineUrlTail=7;ixLineText=8;ixMetaChildren=9;ixChildren=10;
+
 getItemJSONProps=?<[Item]i>
-{	.type=i->type; format('&type=<>&item=$<>',{type, i.id}), type, i->getText(),i->getTagText(i->calcProbability()),i->getColor()
-};
+(	.type=i->type; 
+	{:'urlTail'=>format('&type=<>&item=$<>',{type, i.id}), 'type'=>type, 'text'=>i->getText(),'prop'=>i->getTagText(i->calcProbability()),'color'=>i->getColor()}
+);
 
 urlTailForConnection=?<[TrackedObject]argument, [TrackedObject]conclusion> (format('&type=connection&item=$<>&item2=$<>',{argument.id, conclusion.id}));
 
@@ -347,24 +351,39 @@ getJSONItemConclusionTree=?<[Item]item,level>
 		{:}(item.conclusions %!
 		(
 			$.key.class!=connectionClass?
-			(	[Item]($.key);
-				{$.key.id,getItemJSONProps($.key)+{($.key.class==&propositionClass)|(@$.key.arguments>1?4)|(level==1&&$.key.conclusions?8),$.data->getColor(),urlTailForConnection(item,$.key), $.data->getText(), getJSONArgumentTree($.data,level-1), getJSONItemConclusionTree($.key,level-1)}}
-			)
+			{
+				[Item]($.key).id,
+				getItemJSONProps($.key)+
+				{:	
+					'arrowMode'=>($.key->hasArrowPoint)|(@$.key.arguments>1?4)|(level==1&&$.key.conclusions?8),
+					'arrowColor'=>$.data->getColor(),
+					'arrowUrlTail'=>urlTailForConnection(item,$.key), 
+					'arrowText'=>$.data->getText(), 
+					'metaChildren'=>getJSONArgumentTree($.data,level-1), 
+					'children'=>getJSONItemConclusionTree($.key,level-1)
+				}
+			}
 		))%!$.data
 	)
-// ixUrlTail=0;ixType=1;ixText=2;ixProp=3;ixColor=4;ixArrowMode=5;ixArrowColor=6;ixLineUrlTail=7;ixLineText=8;ixMetaChildren=9;ixChildren=10;
 );
 
 getJSONArgumentTree=?<[TrackedObject]object,level>
 (
 	level ? 
 	(	
-		.ap=object.class==&propositionClass;//->hasArrowPoint;
 		{:}(getValidArgs(object)%!
-		(
-			.l=getItemJSONProps($.key);
-			{$.key.id,l+{ap | (@$.key.conclusions>1?4)|(level==1&&getValidArgs($.key)?16), $.data->getColor(),urlTailForConnection($.key,object), $.data->getText(),getJSONArgumentTree($.data,level-1),getJSONArgumentTree($.key,level-1)}}
-		))%!$.data
+		{	$.key.id,
+			getItemJSONProps($.key)+
+			{: 
+				'arrowMode'=>object->hasArrowPoint | (@$.key.conclusions>1?4)|(level==1&&getValidArgs($.key)?16), 
+				'arrowColor'=>$.data->getColor(),
+				'arrowUrlTail'=>urlTailForConnection($.key,object), 
+				'arrowText'=>$.data->getText(),
+				'metaChildren'=>getJSONArgumentTree($.data,level-1),
+				'children'=>getJSONArgumentTree($.key,level-1)
+			}
+		}
+		)%!$.data
 	)
 );
 

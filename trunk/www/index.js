@@ -1,7 +1,5 @@
 showProbabilities=true;//false;
 
-ixUrlTail=0;ixType=1;ixText=2;ixProp=3;ixColor=4;ixArrowMode=5;ixArrowColor=6;ixArrowUrlTail=7;ixArrowText=8;ixMetaChildren=9;ixChildren=10;
-
 lineMargin=20;
 lineWidth=5;
 lineOffset=lineMargin/2+lineWidth;
@@ -37,8 +35,8 @@ function switchMenu(urlTail,type)
 }
 function itemClick(props,box)
 {
-	var type=props[ixType];
-	if (switchMenu(props[ixUrlTail],type))
+	var type=props.type;
+	if (switchMenu(props.urlTail,type))
 	{
 		eFloatMenus[type].style.left=px(box.offsetLeft);
 		eFloatMenus[type].style.top=px(box.offsetTop+box.offsetHeight);
@@ -46,7 +44,7 @@ function itemClick(props,box)
 }
 function arrowClick(props,box)
 {
-	if (switchMenu(props[ixArrowUrlTail],'connection'))
+	if (switchMenu(props.arrowUrlTail,'connection'))
 	{
 		eFloatMenus.connection.style.left=px(box.offsetLeft-30);
 		eFloatMenus.connection.style.top=px(Math.floor(box.offsetTop+box.offsetHeight/2+6));
@@ -57,18 +55,18 @@ function makeItemBox(props)
 	var line, e;
 	var b=document.createElement("div");
 	b.className='box';
-	b.style.backgroundColor=props[ixColor];
+	b.style.backgroundColor=props.color;
 	if (showProbabilities)
 	{
 		e=document.createElement("div");
 		e.className='probabilityBox';
-		e.innerHTML=props[ixProp];
+		e.innerHTML=props.prop;
 		b.appendChild(e);
 	}
 	{
 		e=document.createElement("div");
 		e.className='itemText';
-		e.innerHTML=props[ixText];
+		e.innerHTML=props.text;
 		b.appendChild(e);
 	}
 	b.addEventListener('click',function(event) { itemClick(props,b); event.stopPropagation();},false);
@@ -91,51 +89,36 @@ function px(v)
 	function genItems(tree,backwards,parentOffset,isMeta,parentId)
 	{
 		var i;
-		var boxOffset=parentOffset;
-		//if (!isMeta)
-		{	boxOffset+=lineMargin*tree.length+lineOffset;
-		}
-		//else
-		//	boxOffset+=lineOffset+lineWidth;
+		var boxOffset=parentOffset+lineMargin*tree.length+lineOffset;
 		for(i in tree)
 		{
 			var id=getIdPostfix(backwards);
 			var props=tree[i];
 			var box=makeItemBox(props);
 			box.id='b'+id;
-			box.style.minWidth=px(lineMargin*props[ixChildren].length);
+			box.style.minWidth=px(lineMargin*props.children.length);
 			var linef=function(props,box) { return function(event) { arrowClick(props,box); event.stopPropagation(); } }(props,box);
 			elemCounter++;
 			var arrowText=null;
 			var offset=boxOffset;
-			var connOffset=parentOffset+lineOffset+(lineMargin)*(backwards?i: tree.length-i-1)+lineOffset-(isMeta?20:0);
+			var connOffset=parentOffset+lineOffset+(lineMargin)*(backwards?i: tree.length-i-1)+lineOffset;
 			var w=boxOffset-connOffset+20;
-			var minW=lineMargin*props[ixMetaChildren].length+10;
+			var minW=lineMargin*props.metaChildren.length+10;
 			if (w<minW) { offset+=minW-w; w=minW; }
 			box.style.marginLeft=px(offset);
-			if (props[ixArrowText]!=null)
+			if (props.arrowText!=null)
 			{	arrowText=document.createElement("div");
 				arrowText.className='arrowText';
-				arrowText.style.marginTop=px(!backwards&&(props[ixArrowMode]&1)&&i==0?10:0);
+				arrowText.style.marginTop=px(!backwards&&(props.arrowMode&1)&&i==0?10:0);
 				arrowText.style.marginLeft=px(connOffset-28);
-				arrowText.innerHTML=props[ixArrowText];
-				arrowText.style.backgroundColor=props[ixArrowColor];
-				//arrowText.style.textShadow="black 0px 0px 1px";
+				arrowText.innerHTML=props.arrowText;
+				arrowText.style.backgroundColor=props.arrowColor;
 			}
-			if (isMeta)			
-			{	var placeHolder=document.createElement("div");
-				container.appendChild(arrowText);	
-				container.appendChild(box);
-				conns.push({'x':connOffset,'w':w,'s':parentId,'d':box.id,'isMeta':true,'color':props[ixArrowColor],'arrow':true });
-				genItems(props[ixMetaChildren],false,offset,true);
-				genItems(props[ixChildren],backwards,offset,false,box.id);
-				continue;
-			}
-			conns.push({'x':connOffset,'s':parentId,'w':w,'d':box.id,'isMeta':false,'color':props[ixArrowColor],'arrow':props[ixArrowMode]&1 });
+			conns.push({'x':connOffset,'s':parentId,'w':w,'d':box.id,'isMeta':isMeta,'color':props.arrowColor,'arrow':props.arrowMode&1 });
 			if (backwards)
-			{	genItems(props[ixChildren],backwards,offset,false,box.id);
+			{	genItems(props.children,backwards,offset,false,box.id);
 				container.appendChild(box);
-				genItems(props[ixMetaChildren],false,connOffset,true,box.id);
+				genItems(props.metaChildren,false,connOffset-20,true,box.id);
 				if (arrowText!=null)
 					container.appendChild(arrowText);	
 			}
@@ -144,8 +127,8 @@ function px(v)
 				if (arrowText!=null)
 					container.appendChild(arrowText);	
 				container.appendChild(box);
-				genItems(props[ixMetaChildren],false,connOffset,true,box.id);
-				genItems(props[ixChildren],backwards,offset,false,box.id);
+				genItems(props.metaChildren,false,connOffset-20,true,box.id);
+				genItems(props.children,backwards,offset,false,box.id);
 			}
 			//document.write();
 		}
