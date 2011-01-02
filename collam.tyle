@@ -338,8 +338,7 @@ gatherConclusions=?<[TrackedObject]root,includeSelf,includeMeta>
 // ixUrlTail=0;ixType=1;ixText=2;ixProp=3;ixColor=4;ixArrowMode=5;ixArrowColor=6;ixLineUrlTail=7;ixLineText=8;ixMetaChildren=9;ixChildren=10;
 
 getItemJSONProps=?<[Item]i>
-(	.type=i->type; 
-	{:'urlTail'=>format('&type=<>&item=$<>',{type, i.id}), 'type'=>type, 'text'=>i->getText(),'prop'=>i->getTagText(i->calcProbability()),'color'=>i->getColor()}
+(	{: 'type'=>i->type, 'box'=>{:'urlTail'=>format('&type=<>&item=$<>',{i->type, i.id}),'text'=>i->getText(),'probBox'=>i->getTagText(i->calcProbability()),'color'=>i->getColor()}}
 );
 
 urlTailForConnection=?<[TrackedObject]argument, [TrackedObject]conclusion> (format('&type=connection&item=$<>&item2=$<>',{argument.id, conclusion.id}));
@@ -355,10 +354,13 @@ getJSONItemConclusionTree=?<[Item]item,level>
 				[Item]($.key).id,
 				getItemJSONProps($.key)+
 				{:	
-					'arrowMode'=>($.key->hasArrowPoint)|(@$.key.arguments>1?4)|(level==1&&$.key.conclusions?8),
-					'arrowColor'=>$.data->getColor(),
-					'arrowUrlTail'=>urlTailForConnection(item,$.key), 
-					'arrowText'=>$.data->getText(), 
+					'arrow'=>
+					{:
+						'mode'=>($.key->hasArrowPoint*2)/*|(@$.key.arguments>1?4)|(level==1&&$.key.conclusions?8)*/,
+						'color'=>$.data->getColor(),
+						'urlTail'=>urlTailForConnection(item,$.key), 
+						'text'=>$.data->getText()
+					},
 					'metaChildren'=>getJSONArgumentTree($.data,level-1), 
 					'children'=>getJSONItemConclusionTree($.key,level-1)
 				}
@@ -375,10 +377,13 @@ getJSONArgumentTree=?<[TrackedObject]object,level>
 		{	$.key.id,
 			getItemJSONProps($.key)+
 			{: 
-				'arrowMode'=>object->hasArrowPoint | (@$.key.conclusions>1?4)|(level==1&&getValidArgs($.key)?16), 
-				'arrowColor'=>$.data->getColor(),
-				'arrowUrlTail'=>urlTailForConnection($.key,object), 
-				'arrowText'=>$.data->getText(),
+				'arrow'=>
+				{:
+					'mode'=>(object->hasArrowPoint|1)/* | (@$.key.conclusions>1?4)|(level==1&&getValidArgs($.key)?16)*/, 
+					'color'=>$.data->getColor(),
+					'urlTail'=>urlTailForConnection($.key,object), 
+					'text'=>$.data->getText(),
+				},
 				'metaChildren'=>getJSONArgumentTree($.data,level-1),
 				'children'=>getJSONArgumentTree($.key,level-1)
 			}
@@ -389,9 +394,9 @@ getJSONArgumentTree=?<[TrackedObject]object,level>
 
 getJSONTriple=?<[Item]center,level>
 (
-	.l=getItemJSONProps(center);
+	.l=getItemJSONProps(center)['box'];
 	getJSONItemConclusionTree(center,level-1),
-	l+{(level==1&&getValidConclusions(center)?8)|(level==1&&getValidArgs(center)?16)},
+	l,//+{(level==1&&getValidConclusions(center)?8)|(level==1&&getValidArgs(center)?16)},
 	getJSONArgumentTree(center,level-1)
 );
 
@@ -421,7 +426,7 @@ processStruct=?<struct,[Item]parent>
 	item
 );
 
-parseTree=?<text>
+[Item]parseTree=?<text>
 (
 	.struct={};
 	.lines=linesplit(text)-{''};
@@ -439,7 +444,7 @@ collam_init=?
 	putline('Initializing Collam...');
 	nextID=1;
 	items={:};
-	currentItem=parseTree(load(projectPath+'exampleTree.txt'));
+	currentItem=parseTree(load(projectPath+'exampleTree.txt')).arguments[:0];
 	/*.p1=propositionClass.new('final conclusion');
 	.p2=propositionClass.new('center conclusion');
 	.p3=propositionClass.new('arg 1');
