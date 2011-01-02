@@ -114,13 +114,24 @@ div.placeHolder
 	clear:left;
 	height:25px;
 }
-div.line,div.shortlineHor,div.shortlineVert
+div.line,div.shortlineHor,div.shortlineVert,div.hlineUp,div.hlineDown
 {
 	margin:0px;padding:0px;
 	position:absolute;
 	width:5px;height:5px;
 	cursor: pointer;
 }
+div.hlineUp
+{
+	-moz-border-radius: 10px 0px 10px 10px;
+	border-radius: 10px 0px 10px 10px;	
+}
+div.hlineDown
+{
+	-moz-border-radius: 10px 10px 0px 10px;
+	border-radius: 10px 10px 0px 10px;	
+}
+
 div.shortlineHor
 {	width:10px;
 }

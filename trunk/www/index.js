@@ -3,6 +3,7 @@ showProbabilities=true;//false;
 lineMargin=20;
 lineWidth=5;
 lineOffset=lineMargin/2;
+arrowSize=6;
 lastUrlTail=null;
 lastSelectedType=null;
 function menuClick(type,index)
@@ -162,20 +163,25 @@ function px(v)
 			}
 			{
 				var line=document.createElement("div");
-				line.className='line';
+				line.className=backwards?'hlineUp':'hlineDown';
 				line.addEventListener('click',onclick,false);
 				line.style.left=px(x);
-				line.style.width=px(conns[c].w-5);//px(conns[c].w);
-				line.style.top=px(yd-(backwards?0:10));
-				line.style.height=px(10);
-				line.style.borderLeft="5px solid";
+				line.style.width=px(conns[c].w-lineWidth);//px(conns[c].w);
+				line.style.top=px(yd-(backwards?0:lineWidth*2));
+				line.style.height=px(lineWidth*2);
+				line.style.borderLeftWidth=px(lineWidth);
+				line.style.borderLeftStyle="solid";
 				if (backwards)
-					line.style.borderTop="5px solid";
+				{
+					line.style.borderTopWidth=px(lineWidth);
+					line.style.borderTopStyle="solid";
+				}
 				else
-					line.style.borderBottom="5px solid";
-				line.style.MozBorderRadius=line.style.WebkitBorderRadius=line.style.borderRadius=backwards?"10px 0px 10px 10px":"10px 10px 0px 10px";
-				line.style.borderColor=conns[c].props.color;//"#334455";
-				//line.style.backgroundColor=conns[c].color;//"#334455";
+				{
+					line.style.borderBottomWidth=px(lineWidth);
+					line.style.borderBottomStyle="solid";
+				}
+				line.style.borderColor=conns[c].props.color;
 				container.appendChild(line);
 			}
 			if(conns[c].props.mode)
@@ -185,8 +191,8 @@ function px(v)
 				ar.style.backgroundColor=conns[c].props.color;
 				ar.innerHTML='<img src="arrow.png"></img>';
 				ar.addEventListener('click',onclick,false);
-				ar.style.left=px(x+(conns[c].props.mode==1?-6:conns[c].w-8));
-				ar.style.top=px(conns[c].props.mode==1?ys-(backwards?6:0):yd-6);
+				ar.style.left=px(x+(conns[c].props.mode==1?-arrowSize:conns[c].w-arrowSize-2));
+				ar.style.top=px(conns[c].props.mode==1?ys-(backwards?arrowSize:0):yd-arrowSize);
 				container.appendChild(ar);
 			}
 		}
