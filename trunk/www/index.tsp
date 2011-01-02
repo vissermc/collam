@@ -150,15 +150,15 @@ div.arrow0, div.arrow1, div.arrow2,div.arrow3
 	overflow:hidden;
 	cursor: pointer;
 }
-div.arrow0,div.arrow3
+div.arrow1,div.arrow3
 {
 	width:8px;height:17px;
 }
-div.arrow1, div.arrow2
+div.arrow0, div.arrow2
 {
 	width:17px;height:8px;
 }
-div.arrow0 img
+div.arrow1 img
 {
 	position:relative;right:9px;
 }

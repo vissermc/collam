@@ -60,7 +60,7 @@ function makeItemBox(props)
 	{
 		e=document.createElement("div");
 		e.className='probabilityBox';
-		e.innerHTML=props.prop;
+		e.innerHTML=props.probBox;
 		b.appendChild(e);
 	}
 	{
@@ -69,7 +69,7 @@ function makeItemBox(props)
 		e.innerHTML=props.text;
 		b.appendChild(e);
 	}
-	b.addEventListener('click',function(event) { itemClick(props,b); event.stopPropagation();},false);
+	b.addEventListener('click',function(event) { props.onclick(props,b);/*itemClick(props,b);*/ event.stopPropagation();},false);
 //	b.onclick=function() {  return false;}
 
 	return b;
@@ -94,10 +94,10 @@ function px(v)
 		{
 			var id=getIdPostfix(backwards);
 			var props=tree[i];
-			var box=makeItemBox(props);
+			var box=makeItemBox(props.box);
 			box.id='b'+id;
 			box.style.minWidth=px(lineMargin*props.children.length);
-			var linef=function(props,box) { return function(event) { arrowClick(props,box); event.stopPropagation(); } }(props,box);
+			var linef=function(props,box) { return function(event) { props.arrow.onclick(props.arrow,box); event.stopPropagation(); } }(props,box);
 			elemCounter++;
 			var arrowText=null;
 			var offset=boxOffset;
@@ -106,15 +106,15 @@ function px(v)
 			var minW=lineMargin*props.metaChildren.length+10;
 			if (w<minW) { offset+=minW-w; w=minW; }
 			box.style.marginLeft=px(offset);
-			if (props.arrowText!=null)
+			if (props.arrow.text!=null)
 			{	arrowText=document.createElement("div");
 				arrowText.className='arrowText';
-				arrowText.style.marginTop=px(!backwards&&(props.arrowMode&1)&&i==0?10:0);
+				arrowText.style.marginTop=px(!backwards&&(props.arrow.mode&1)&&i==0?10:0);
 				arrowText.style.marginLeft=px(connOffset-8);
-				arrowText.innerHTML=props.arrowText;
-				arrowText.style.backgroundColor=props.arrowColor;
+				arrowText.innerHTML=props.arrow.text;
+				arrowText.style.backgroundColor=props.arrow.color;
 			}
-			conns.push({'dx':connOffset-offset,'s':parentId,'w':w,'d':box.id,'isMeta':isMeta,'color':props.arrowColor,'arrow':props.arrowMode&1 });
+			conns.push({'dx':connOffset-offset,'s':parentId,'w':w,'d':box.id,'isMeta':isMeta,'props':props.arrow });
 			if (backwards)
 			{	genItems(props.children,backwards,offset,false,box.id);
 				container.appendChild(box);
@@ -140,27 +140,30 @@ function px(v)
 			var s=document.getElementById(conns[c].s);
 			var d=document.getElementById(conns[c].d);
 			var x=conns[c].dx+d.offsetLeft;
+			var onclick;
 			var backwards=s!=null && s.offsetTop>d.offsetTop;
 			var isMeta=conns[c].isMeta;
-			var yd=d.offsetTop+d.offsetHeight/2;
-			var y=s==null?yd : ( backwards ? yd : s.offsetTop+(isMeta?s.offsetHeight/2+lineWidth:s.offsetHeight) );
-			var h=(backwards ? s.offsetTop : yd ) - y;
+			var yd=d.offsetTop+(d.offsetHeight-lineWidth)/2;
+			var ys=s==null?yd:s.offsetTop +(isMeta?(s.offsetHeight+lineWidth)/2:(backwards?0:s.offsetHeight));
+			var y= backwards ? yd : ys;
+			var h=(backwards ? ys : yd ) - y;
 			{
 				var line=document.createElement("div");
+				onclick=function(props,line) { return function(event) { props.onclick(props.box); event.stopPropagation(); } }(conns[c].props,line);
 				line.className='line';
-				//todo line.onclick=linef;
+				line.addEventListener('click',onclick,false);
 				line.style.left=px(x);
 				line.style.width=px(lineWidth);//px(conns[c].w);
 				var lineDown=backwards?lineWidth:0;
 				line.style.top=px(y+lineDown);
 				line.style.height=px(h-lineDown);
-				line.style.backgroundColor=conns[c].color;//"#334455";
+				line.style.backgroundColor=conns[c].props.color;//"#334455";
 				container.appendChild(line);
 			}
 			{
 				var line=document.createElement("div");
 				line.className='line';
-				//todo line.onclick=linef;
+				line.addEventListener('click',onclick,false);
 				line.style.left=px(x);
 				line.style.width=px(conns[c].w-5);//px(conns[c].w);
 				line.style.top=px(yd-(backwards?0:10));
@@ -171,28 +174,19 @@ function px(v)
 				else
 					line.style.borderBottom="5px solid";
 				line.style.MozBorderRadius=line.style.WebkitBorderRadius=line.style.borderRadius=backwards?"10px 0px 10px 10px":"10px 10px 0px 10px";
-				line.style.borderColor=conns[c].color;//"#334455";
+				line.style.borderColor=conns[c].props.color;//"#334455";
 				//line.style.backgroundColor=conns[c].color;//"#334455";
 				container.appendChild(line);
 			}
-			if(conns[c].arrow)
+			if(conns[c].props.mode)
 			{
 				var ar=document.createElement("div");
-				ar.style.backgroundColor=conns[c].color;
+				ar.className='arrow'+(conns[c].props.mode==1?(backwards?2:0):1);
+				ar.style.backgroundColor=conns[c].props.color;
 				ar.innerHTML='<img src="arrow.png"></img>';
-				//ar.addEventListener('click',linef,false);
-				if (backwards)
-				{
-					ar.className='arrow0';
-					ar.style.top=px(y-6);
-					ar.style.left=px(x+(conns[c].w-8));
-				}
-				else
-				{
-					ar.className='arrow1';
-					ar.style.top=px(y);
-					ar.style.left=px(x-6);
-				}
+				ar.addEventListener('click',onclick,false);
+				ar.style.left=px(x+(conns[c].props.mode==1?-6:conns[c].w-8));
+				ar.style.top=px(conns[c].props.mode==1?ys-(backwards?6:0):yd-6);
 				container.appendChild(ar);
 			}
 		}
