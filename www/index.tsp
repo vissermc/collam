@@ -83,7 +83,7 @@ div.headerElemTitle
 div.treeContainer
 {
 	width:100%;
-	margin:2px 0 2px 0;
+	margin-left:2px 0 2px 0;
 	padding-left:20px;
 }
 div.box
@@ -92,7 +92,7 @@ div.box
 	clear:left;
 	text-align:center;
 	background-color:#88ff88;
-	padding:5px;
+	padding:4px;
 	margin:5px 0px 5px 0px;
 	cursor: pointer;
 	-moz-border-radius: 5px;
