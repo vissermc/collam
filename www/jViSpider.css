@@ -1,0 +1,99 @@
+div.ViSpi_box
+{
+	float:left;
+	clear:left;
+	text-align:center;
+	background-color:#88ff88;
+	padding:4px;
+	margin:5px 0px 5px 0px;
+	cursor: pointer;
+	-moz-border-radius: 5px;
+	border-radius: 5px;	
+}
+div.ViSpi_arrowText
+{
+	float:left;
+	clear:left;
+	z-index:2;
+	position:relative;
+	-moz-border-radius: 5px;
+	border-radius: 5px;	
+	padding:1px 4px 1px 4px;
+}
+div.ViSpi_line,div.ViSpi_shortlineHor,div.ViSpi_shortlineVert,div.ViSpi_hlineUp,div.ViSpi_hlineDown
+{
+	margin:0px;padding:0px;
+	position:absolute;
+	width:5px;height:5px;
+	cursor: pointer;
+}
+div.ViSpi_hlineUp
+{
+	-moz-border-radius: 10px 0px 10px 10px;
+	border-radius: 10px 0px 10px 10px;	
+}
+div.ViSpi_hlineDown
+{
+	-moz-border-radius: 10px 10px 0px 10px;
+	border-radius: 10px 10px 0px 10px;	
+}
+
+div.ViSpi_shortlineHor
+{	width:10px;
+}
+div.ViSpi_shortlineVert
+{	height:7px;
+	left:10px;
+	background-color:black;
+}
+div.ViSpi_shortlineBottom
+{
+	position:relative;
+	top:5px;
+}
+div.ViSpi_shortlineTop
+{
+	position:relative;
+	top:-12px;
+}
+div.ViSpi_arrow0, div.ViSpi_arrow1, div.ViSpi_arrow2,div.ViSpi_arrow3
+{
+	z-index:2;
+	margin:0px;
+	position:absolute;
+	background-color:#88ff88;
+	font-weight:bold;
+	font-size:25px;
+	overflow:hidden;
+	cursor: pointer;
+}
+div.ViSpi_arrow1,div.ViSpi_arrow3
+{
+	width:8px;height:17px;
+}
+div.ViSpi_arrow0, div.ViSpi_arrow2
+{
+	width:17px;height:8px;
+}
+div.ViSpi_arrow1 img
+{
+	position:relative;right:9px;
+}
+div.ViSpi_arrow2 img
+{
+	position:relative;bottom:9px;
+}
+
+div.ViSpi_ProbabilityBox
+{
+	border: 1px solid #aaaaaa;
+	background-color: white;
+	-moz-border-radius: 3px;
+	border-radius: 3px;	
+}
+div.ViSpi_itemText, div.ViSpi_probabilityBox
+{
+	display:inline-block;
+	padding: 2px;
+	margin-right: 5px;
+}
