@@ -62,7 +62,7 @@ function px(v)
 			box.style.marginLeft=px(offset);
 			if (props.arrow.text!=null)
 			{	arrowText=document.createElement("div");
-				arrowText.className='arrowText';
+				arrowText.className='ViSpi_arrowText';
 				arrowText.style.marginTop=px(!backwards&&(props.arrow.mode&1)&&i==0?10:0);
 				arrowText.style.marginLeft=px(connOffset-8);
 				arrowText.innerHTML=props.arrow.text;
@@ -104,7 +104,7 @@ function px(v)
 			{
 				var line=document.createElement("div");
 				onclick=function(props,line) { return function(event) { props.onclick(props.box); event.stopPropagation(); } }(conns[c].props,line);
-				line.className='line';
+				line.className='ViSpi_line';
 				line.addEventListener('click',onclick,false);
 				line.style.left=px(x);
 				line.style.width=px(lineWidth);//px(conns[c].w);
@@ -116,7 +116,7 @@ function px(v)
 			}
 			{
 				var line=document.createElement("div");
-				line.className=backwards?'hlineUp':'hlineDown';
+				line.className=backwards?'ViSpi_hlineUp':'ViSpi_hlineDown';
 				line.addEventListener('click',onclick,false);
 				line.style.left=px(x);
 				line.style.width=px(conns[c].w-lineWidth);//px(conns[c].w);
@@ -140,7 +140,7 @@ function px(v)
 			if(conns[c].props.mode)
 			{
 				var ar=document.createElement("div");
-				ar.className='arrow'+(conns[c].props.mode==1?(backwards?2:0):1);
+				ar.className='ViSpi_arrow'+(conns[c].props.mode==1?(backwards?2:0):1);
 				ar.style.backgroundColor=conns[c].props.color;
 				ar.innerHTML='<img src="arrow.png"></img>';
 				ar.addEventListener('click',onclick,false);
