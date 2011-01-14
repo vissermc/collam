@@ -69,7 +69,7 @@ Item.prototype.getTagText=function(prop)
 function Or()
 {
 }
-Or.prototype = New prototype;
+Or.prototype = New Item;
 Or.prototype.calcProbability=function()
 {
 	var m=1.0;
@@ -85,8 +85,96 @@ Or.prototype.getText=function()
 function And()
 {
 }
-And.prototype = New prototype;
+And.prototype = New Item;
 And.prototype.getText=function()
 {
 	return 'and';
 }
+
+function Proposition(text,probability)
+{
+	this.text=text;
+	this.probability=probability;
+}
+Proposition.prototype = New Item;
+Proposition.prototype.calcProbability=function()
+{
+	return this.probability * Item.prototype.calcProbability.call(this);
+}
+Proposition.prototype.getText=function()
+{
+	return this.text;
+}
+
+Proposition.prototype.hasArrowPoint = 1;
+/*
+	$.getTagText=?<prop><[Item]this>
+	(	.p=getPropData(this).probability;
+		(Item.prototype.getTagText(prop))+(p!=1.0 ? '&nbsp;('+p+')')
+	);
+*/
+Item.prototype.getTagText=function(prop)
+{	
+	return (Item.prototype.getTagText.call(this,prop))+(this.probability!=1.0 ? '&nbsp;('+this.probability+')');
+}
+
+getItemJSONProps=?<[Item]i>
+(	{: 'type'=>i->type, 'box'=>{:'urlTail'=>format('&type=<>&item=$<>',{i->type, i.id}),'text'=>i->getText(),'probBox'=>i->getTagText(i->calcProbability()),'color'=>i->getColor()}}
+);
+
+getJSONItemConclusionTree=?<[Item]item,level>
+(
+	level ? ( 
+		//.c=item->getColor();
+		{:}(item.conclusions %!
+		(
+			$.key.class!=connectionClass?
+			{
+				[Item]($.key).id,
+				getItemJSONProps($.key)+
+				{:	
+					'arrow'=>
+					{:
+						'mode'=>($.key->hasArrowPoint*2)/*|(@$.key.arguments>1?4)|(level==1&&$.key.conclusions?8)*/,
+						'color'=>$.data->getColor(),
+						'urlTail'=>urlTailForConnection(item,$.key), 
+						'text'=>$.data->getText()
+					},
+					'metaChildren'=>getJSONArgumentTree($.data,level-1), 
+					'children'=>getJSONItemConclusionTree($.key,level-1)
+				}
+			}
+		))%!$.data
+	)
+);
+
+getJSONArgumentTree=?<[TrackedObject]object,level>
+(
+	level ? 
+	(	
+		{:}(getValidArgs(object)%!
+		{	$.key.id,
+			getItemJSONProps($.key)+
+			{: 
+				'arrow'=>
+				{:
+					'mode'=>(object->hasArrowPoint|1)/* | (@$.key.conclusions>1?4)|(level==1&&getValidArgs($.key)?16)*/, 
+					'color'=>$.data->getColor(),
+					'urlTail'=>urlTailForConnection($.key,object), 
+					'text'=>$.data->getText(),
+				},
+				'metaChildren'=>getJSONArgumentTree($.data,level-1),
+				'children'=>getJSONArgumentTree($.key,level-1)
+			}
+		}
+		)%!$.data
+	)
+);
+
+getJSONTriple=?<[Item]center,level>
+(
+	.l=getItemJSONProps(center)['box'];
+	getJSONItemConclusionTree(center,level-1),
+	l,//+{(level==1&&getValidConclusions(center)?8)|(level==1&&getValidArgs(center)?16)},
+	getJSONArgumentTree(center,level-1)
+);
