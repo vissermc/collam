@@ -36,6 +36,8 @@ body
 	background-color: #66ff66;
 	border: 2px solid #33aa33;
 	border-style: none none solid none;
+	visibility:hidden;
+	height:0px;
 }
 div.headerElem
 {
@@ -317,7 +319,7 @@ function init()
 		)%>
 </div><%
 	);%>
-<div class="treeContainer" id="container" style="width:800px;">
+<div class="treeContainer" id="container" style="width:1200px;">
 </div>
 </body><%
 );
