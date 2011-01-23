@@ -1,3 +1,10 @@
+nextID=0;
+function getNewId()
+{
+	nextID++;
+	return nextID;
+}
+
 function Connection(argument,conclusion,probability)
 {
 	this.id=getNewId();
@@ -36,7 +43,6 @@ function Item()
 	this.id=getNewId();
 	this.argumentConns={};
 	this.conclusionConns={};
-	this.probability=probability;
 }
 Item.prototype.hasArrowPoint=0;
 /*Item.prototype.getconclusionConns=function()
@@ -72,6 +78,7 @@ Item.prototype.getItemJSONProps=function()
 
 function Or()
 {
+	Item.call(this);
 }
 Or.prototype = new Item;
 Or.prototype.calcProbability=function()
@@ -88,6 +95,7 @@ Or.prototype.getText=function()
 }
 function And()
 {
+	Item.call(this);
 }
 And.prototype = new Item;
 And.prototype.getText=function()
@@ -97,6 +105,7 @@ And.prototype.getText=function()
 
 function Proposition(text,probability)
 {
+	Item.call(this);
 	this.text=text;
 	this.probability=probability==null?1.0:probability;
 }
