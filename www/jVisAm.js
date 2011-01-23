@@ -1,13 +1,13 @@
 function Connection(argument,conclusion,probability)
 {
 	this.id=getNewId();
-	this.arguments={};
+	this.argumentConns={};
 	this.argument=argument;
 	this.conclusion=conclusion;
 	this.probability=probability;
 }
 Connection.prototype.hasArrowPoint=1;
-/*Connection.prototype.getConclusions=function()
+/*Connection.prototype.getconclusionConns=function()
 {
 	return {this.conclusion.id};
 }*/
@@ -15,8 +15,8 @@ Connection.prototype.calcProbability=function()
 {
 	var m=this.probability;
 	//putline(.?{this.data->calcProbability()}); putline(.?{this.argument->getText(),this.conclusion->getText()});
-	for(a in this.arguments)
-	{	m*=this.arguments[a].calcProbability();
+	for(a in this.argumentConns)
+	{	m*=this.argumentConns[a].calcProbability();
 	}
 	return (this.probability<0?1.0:0.0)+(m*this.argument.calcProbability());
 }
@@ -34,20 +34,20 @@ Connection.prototype.getText=function()
 function Item()
 {
 	this.id=getNewId();
-	this.arguments={};
-	this.conclusions={};
+	this.argumentConns={};
+	this.conclusionConns={};
 	this.probability=probability;
 }
 Item.prototype.hasArrowPoint=0;
-/*Item.prototype.getConclusions=function()
+/*Item.prototype.getconclusionConns=function()
 {
-	return this.conclusions;
+	return this.conclusionConns;
 }*/
 Item.prototype.calcProbability=function()
 {
 	var m=1.0;
-	for(a in this.arguments)
-	{	m*=this.arguments[a].calcProbability();
+	for(a in this.argumentConns)
+	{	m*=this.argumentConns[a].calcProbability();
 	}
 	return m;
 }
@@ -63,18 +63,22 @@ Item.prototype.getText=function()
 }
 Item.prototype.getTagText=function(prop)
 {	
-	return '&#x2116;&nbsp;'+this.id+(prop!=1.0?'&nbsp;&nbsp;P&nbsp;'+prop);
+	return '&#x2116;&nbsp;'+this.id+(prop!=1.0?'&nbsp;&nbsp;P&nbsp;'+prop:'');
+}
+Item.prototype.getItemJSONProps=function()
+{
+	return { 'box': { 'text':this.getText(),'probBox':this.getTagText(this.calcProbability()),'color':this.getColor() } };
 }
 
 function Or()
 {
 }
-Or.prototype = New Item;
+Or.prototype = new Item;
 Or.prototype.calcProbability=function()
 {
 	var m=1.0;
-	for(a in this.arguments)
-	{	m*=1.0-this.arguments[a].calcProbability();
+	for(a in this.argumentConns)
+	{	m*=1.0-this.argumentConns[a].calcProbability();
 	}
 	return 1.0-m;
 }
@@ -85,7 +89,7 @@ Or.prototype.getText=function()
 function And()
 {
 }
-And.prototype = New Item;
+And.prototype = new Item;
 And.prototype.getText=function()
 {
 	return 'and';
@@ -94,9 +98,9 @@ And.prototype.getText=function()
 function Proposition(text,probability)
 {
 	this.text=text;
-	this.probability=probability;
+	this.probability=probability==null?1.0:probability;
 }
-Proposition.prototype = New Item;
+Proposition.prototype = new Item;
 Proposition.prototype.calcProbability=function()
 {
 	return this.probability * Item.prototype.calcProbability.call(this);
@@ -113,68 +117,106 @@ Proposition.prototype.hasArrowPoint = 1;
 		(Item.prototype.getTagText(prop))+(p!=1.0 ? '&nbsp;('+p+')')
 	);
 */
-Item.prototype.getTagText=function(prop)
+Proposition.prototype.getTagText=function(prop)
 {	
-	return (Item.prototype.getTagText.call(this,prop))+(this.probability!=1.0 ? '&nbsp;('+this.probability+')');
+	return (Item.prototype.getTagText.call(this,prop))+(this.probability!=1.0 ? '&nbsp;('+this.probability+')' : '');
 }
 
-getItemJSONProps=?<[Item]i>
-(	{: 'type'=>i->type, 'box'=>{:'urlTail'=>format('&type=<>&item=$<>',{i->type, i.id}),'text'=>i->getText(),'probBox'=>i->getTagText(i->calcProbability()),'color'=>i->getColor()}}
-);
+function connectItems(argument,conclusion, strength)
+{
+	var c=new Connection(argument,conclusion,strength);
+	argument.conclusionConns[c.id]=c;
+	conclusion.argumentConns[c.id]=c;
+}
 
-getJSONItemConclusionTree=?<[Item]item,level>
-(
-	level ? ( 
+function getJSONItemConclusionTree(item,level)
+{
+	if (!level)
+		return [];
+	var r=[];
+	for (i in this.conclusionConns)
+	{
+		var cc=this.conclusionConns[i];
 		//.c=item->getColor();
-		{:}(item.conclusions %!
-		(
-			$.key.class!=connectionClass?
-			{
-				[Item]($.key).id,
-				getItemJSONProps($.key)+
-				{:	
-					'arrow'=>
-					{:
-						'mode'=>($.key->hasArrowPoint*2)/*|(@$.key.arguments>1?4)|(level==1&&$.key.conclusions?8)*/,
-						'color'=>$.data->getColor(),
-						'urlTail'=>urlTailForConnection(item,$.key), 
-						'text'=>$.data->getText()
-					},
-					'metaChildren'=>getJSONArgumentTree($.data,level-1), 
-					'children'=>getJSONItemConclusionTree($.key,level-1)
-				}
-			}
-		))%!$.data
-	)
-);
-
-getJSONArgumentTree=?<[TrackedObject]object,level>
-(
-	level ? 
-	(	
-		{:}(getValidArgs(object)%!
-		{	$.key.id,
-			getItemJSONProps($.key)+
-			{: 
-				'arrow'=>
-				{:
-					'mode'=>(object->hasArrowPoint|1)/* | (@$.key.conclusions>1?4)|(level==1&&getValidArgs($.key)?16)*/, 
-					'color'=>$.data->getColor(),
-					'urlTail'=>urlTailForConnection($.key,object), 
-					'text'=>$.data->getText(),
-				},
-				'metaChildren'=>getJSONArgumentTree($.data,level-1),
-				'children'=>getJSONArgumentTree($.key,level-1)
-			}
+		if (cc.conclusion.prototype!=Connection.prototype)
+		{
+			var ps=getItemJSONProps(cc.conclusion);
+			ps.arrow=
+				{
+					'mode': (cc.conclusion.hasArrowPoint*2)/*|(@$.key.argumentConns>1?4)|(level==1&&$.key.conclusionConns?8)*/,
+					'color': cc.getColor(),
+					//'urlTail': urlTailForConnection(item,$.key), 
+					'text': cc.getText()
+				};
+			ps.metaChildren=getJSONArgumentTree(cc,level-1);
+			ps.children=getJSONItemConclusionTree(cc.conclusion,level-1);
+			r.push( [ cc.conclusion.id, ps ] );
 		}
-		)%!$.data
-	)
-);
+	}
+	r.sort();
+	var rr=[];
+	for(ri in r)
+	{	rr.push(r[ri][1]);
+	}
+	return rr;
+}
 
-getJSONTriple=?<[Item]center,level>
-(
-	.l=getItemJSONProps(center)['box'];
-	getJSONItemConclusionTree(center,level-1),
-	l,//+{(level==1&&getValidConclusions(center)?8)|(level==1&&getValidArgs(center)?16)},
-	getJSONArgumentTree(center,level-1)
-);
+function getJSONArgumentTree(object,level)
+{
+	if (!level)
+		return [];
+	var r=[];
+	for (i in this.argumentConns)
+	{
+		var cc=this.argumentConns[i];
+		{
+			ps.arrow=
+				{
+					'mode': (/*object.hasArrowPoint|*/1)/*|(@$.key.argumentConns>1?4)|(level==1&&$.key.conclusionConns?8)*/,
+					'color': cc.getColor(),
+					//'urlTail': urlTailForConnection(item,$.key), 
+					'text': cc.getText()
+				};
+			ps.metaChildren=getJSONArgumentTree(cc,level-1);
+			ps.children=getJSONArgumentTree(cc.argument,level-1);
+			r.push( [ cc.argument.id, ps ] );
+		}
+	}
+	r.sort();
+	var rr=[];
+	for(ri in r)
+	{	rr.push(r[ri][1]);
+	}
+	return rr;
+}
+
+function getJSONTriple(center,level)
+{
+	var l=getItemJSONProps(center).box;
+	return {
+		'topTree': getJSONItemConclusionTree(center,level-1),
+		'center': l,//+{(level==1&&getValidconclusionConns(center)?8)|(level==1&&getValidArgs(center)?16)},
+		'bottomTree': getJSONArgumentTree(center,level-1)
+	};
+}
+
+function testFill(target)
+{
+	var p1=new Proposition('final conclusion');
+	var p2=new Proposition('center conclusion');
+	var p3=new Proposition('arg 1');
+	var p4=new Proposition('arg 2',0.2);
+	var p5=new Proposition('arg 3');
+	var p6=new Or();
+	var p7=new Proposition('arg 4');
+	var p8=new Proposition('arg 5');
+	connectItems(p2,p1,1);
+	connectItems(p3,p6,1);
+	connectItems(p5,p6,1);
+	connectItems(p6,p2,1);
+	connectItems(p4,p2,-1);
+	connectItems(p7,p5.conclusionConns[p6.id],-1);
+	connectItems(p8,p7.conclusionConns[p5.conclusionConns[p6.id].id],1);
+	var currentItem=p2;
+	fillSpider(target,getJSONTriple(currentItem,-1));
+}
