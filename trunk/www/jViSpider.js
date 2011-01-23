@@ -156,7 +156,7 @@ function px(v)
 		conns=[];
 		container=document.createElement("div");
 		elemCounter=0;
-		var cid="centre"+instanceCounter;
+		var cid="center"+instanceCounter;
 		genItems(spider.topTree,true,0,false,cid);
 		var bid;
 		var cbox;
