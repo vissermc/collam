@@ -1,4 +1,4 @@
-showProbabilities=true;//false;
+showProbabilities=false;//true;//false;
 
 lineMargin=20;
 lineWidth=5;

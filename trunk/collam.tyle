@@ -68,6 +68,8 @@ tryDestroy=?<[TrackedObject]o>
 tryDestroyItem=?
 (	//todo
 );
+//linkWords={'supports','challenges'};
+linkWords={'because','but'};
 &[Connection.class]connectionClass.!
 (
 	*$={};
@@ -98,7 +100,7 @@ tryDestroyItem=?
 	$.getText=?<><[Connection]this>
 	(
 		.p=getConnData(this).probability;
-		this->hasArrowPoint?(p>=0?'supports'+(p==1.0?'':' '+p):'challenges'+(p==-1.0?'':' '+-p)):(p==1.0?() :''(p))
+		this.conclusion->hasArrowPoint?(p>=0?linkWords[0]+(p==1.0?'':' '+p):linkWords[1]+(p==-1.0?'':' '+-p)):(p==1.0?() :''(p))
 	);
 );
 acceptItemChange=?<[Item]i>
@@ -121,7 +123,7 @@ isObjectValid=?<[TrackedObject]o>(indexStates(o).isDeleted==0);
 getData=?<[TrackedObject]o> (	&indexStates(o).data );
 [ConnData]getConnData=getData;
 [PropData]getPropData=getData;
-getChangeData=?{curTracker,dateTime!,1};
+getChangeData=?{curTracker,getDateTime!,1};
 prepareEdit=?<[TrackedObject]o>
 (	{:curTracker}@o.states ?:
 	(	o.states[curTracker]=o.states[()];
@@ -329,7 +331,7 @@ findObjectInConclusions=?<[Item]root, [TrackedObject=>]findOneOfUs,includeSelf>
 
 gatherConclusions=?<[TrackedObject]root,includeSelf,includeMeta>
 (
-	s={:};
+	.s={:};
 	.f= ? (s:+=$;1);
 	root.!iterateConclusions(f,includeSelf,includeMeta);
 	s
@@ -379,7 +381,7 @@ getJSONArgumentTree=?<[TrackedObject]object,level>
 			{: 
 				'arrow'=>
 				{:
-					'mode'=>(object->hasArrowPoint|1)/* | (@$.key.conclusions>1?4)|(level==1&&getValidArgs($.key)?16)*/, 
+					'mode'=>(object->hasArrowPoint)/* | (@$.key.conclusions>1?4)|(level==1&&getValidArgs($.key)?16)*/, 
 					'color'=>$.data->getColor(),
 					'urlTail'=>urlTailForConnection($.key,object), 
 					'text'=>$.data->getText(),
@@ -444,7 +446,7 @@ collam_init=?
 	putline('Initializing Collam...');
 	nextID=1;
 	items={:};
-	currentItem=parseTree(load(projectPath+'exampleTree.txt')).arguments[:0];
+	currentItem=parseTree(load(projectPath+'exampleTree.txt'));//.arguments[:0];
 	/*.p1=propositionClass.new('final conclusion');
 	.p2=propositionClass.new('center conclusion');
 	.p3=propositionClass.new('arg 1');
