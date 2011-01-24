@@ -46,8 +46,8 @@ function px(v)
 		var boxOffset=parentOffset+lineMargin*tree.length+lineOffset;
 		for(i in tree)
 		{
-			var id=getIdPostfix(backwards);
 			var props=tree[i];
+			var id=getIdPostfix(backwards);
 			var box=makeItemBox(props.box);
 			box.id='b'+id;
 			box.style.minWidth=px(lineMargin*props.children.length);

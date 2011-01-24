@@ -1,3 +1,11 @@
+function getCSSColor(v,rgb)
+{
+	var l=Math.floor(v*85);
+	l=[170-l,170+l];
+	for(var i in l) l[i]=l[i].toString(16);
+	return '#'+l[rgb[0]]+l[rgb[1]]+l[rgb[2]];
+}
+
 nextID=0;
 function getNewId()
 {
@@ -22,7 +30,7 @@ Connection.prototype.calcProbability=function()
 {
 	var m=this.probability;
 	//putline(.?{this.data->calcProbability()}); putline(.?{this.argument->getText(),this.conclusion->getText()});
-	for(a in this.argumentConns)
+	for(var a in this.argumentConns)
 	{	m*=this.argumentConns[a].calcProbability();
 	}
 	return (this.probability<0?1.0:0.0)+(m*this.argument.calcProbability());
@@ -30,7 +38,7 @@ Connection.prototype.calcProbability=function()
 Connection.prototype.getColor=function()
 {
 	var cp=this.calcProbability();
-	getCSSColor(this.probability<0?1.0-cp:cp,this.probability<0?[1,0,0]:[0,1,0]);
+	return getCSSColor(this.probability<0?1.0-cp:cp,this.probability<0?[1,0,0]:[0,1,0]);
 }
 Connection.prototype.getText=function()
 {
@@ -52,7 +60,7 @@ Item.prototype.hasArrowPoint=0;
 Item.prototype.calcProbability=function()
 {
 	var m=1.0;
-	for(a in this.argumentConns)
+	for(var a in this.argumentConns)
 	{	m*=this.argumentConns[a].calcProbability();
 	}
 	return m;
@@ -60,7 +68,7 @@ Item.prototype.calcProbability=function()
 Item.prototype.getColor=function()
 {
 	var cp=this.calcProbability();
-	getCSSColor(cp,cp<0?[1,0,0]:[0,1,0]);
+	return getCSSColor(cp,cp<0?[1,0,0]:[0,1,0]);
 }
 Item.prototype.getText=function()
 {
@@ -84,7 +92,7 @@ Or.prototype = new Item;
 Or.prototype.calcProbability=function()
 {
 	var m=1.0;
-	for(a in this.argumentConns)
+	for(var a in this.argumentConns)
 	{	m*=1.0-this.argumentConns[a].calcProbability();
 	}
 	return 1.0-m;
@@ -134,8 +142,8 @@ Proposition.prototype.getTagText=function(prop)
 function connectItems(argument,conclusion, strength)
 {
 	var c=new Connection(argument,conclusion,strength);
-	argument.conclusionConns[c.id]=c;
-	conclusion.argumentConns[c.id]=c;
+	argument.conclusionConns[conclusion.id]=c;
+	conclusion.argumentConns[argument.id]=c;
 }
 
 function getJSONItemConclusionTree(item,level)
@@ -143,28 +151,29 @@ function getJSONItemConclusionTree(item,level)
 	if (!level)
 		return [];
 	var r=[];
-	for (i in this.conclusionConns)
+	for (var i in item.conclusionConns)
 	{
-		var cc=this.conclusionConns[i];
+		var cc=item.conclusionConns[i];
+		var c=cc.conclusion;
 		//.c=item->getColor();
-		if (cc.conclusion.prototype!=Connection.prototype)
+		if (c.prototype!=Connection.prototype)
 		{
-			var ps=getItemJSONProps(cc.conclusion);
+			var ps=c.getItemJSONProps();
 			ps.arrow=
 				{
-					'mode': (cc.conclusion.hasArrowPoint*2)/*|(@$.key.argumentConns>1?4)|(level==1&&$.key.conclusionConns?8)*/,
+					'mode': (c.hasArrowPoint*2)/*|(@$.key.argumentConns>1?4)|(level==1&&$.key.conclusionConns?8)*/,
 					'color': cc.getColor(),
 					//'urlTail': urlTailForConnection(item,$.key), 
 					'text': cc.getText()
 				};
 			ps.metaChildren=getJSONArgumentTree(cc,level-1);
-			ps.children=getJSONItemConclusionTree(cc.conclusion,level-1);
-			r.push( [ cc.conclusion.id, ps ] );
+			ps.children=getJSONItemConclusionTree(c,level-1);
+			r.push( [ c.id, ps ] );
 		}
 	}
 	r.sort();
 	var rr=[];
-	for(ri in r)
+	for(var ri in r)
 	{	rr.push(r[ri][1]);
 	}
 	return rr;
@@ -175,9 +184,12 @@ function getJSONArgumentTree(object,level)
 	if (!level)
 		return [];
 	var r=[];
-	for (i in this.argumentConns)
+	for (var i in object.argumentConns)
 	{
-		var cc=this.argumentConns[i];
+		var ps=object.getItemJSONProps();
+		var cc=object.argumentConns[i];
+
+		var a=cc.argument;
 		{
 			ps.arrow=
 				{
@@ -187,13 +199,13 @@ function getJSONArgumentTree(object,level)
 					'text': cc.getText()
 				};
 			ps.metaChildren=getJSONArgumentTree(cc,level-1);
-			ps.children=getJSONArgumentTree(cc.argument,level-1);
-			r.push( [ cc.argument.id, ps ] );
+			ps.children=getJSONArgumentTree(a,level-1);
+			r.push( [ a.id, ps ] );
 		}
 	}
 	r.sort();
 	var rr=[];
-	for(ri in r)
+	for(var ri in r)
 	{	rr.push(r[ri][1]);
 	}
 	return rr;
@@ -201,10 +213,10 @@ function getJSONArgumentTree(object,level)
 
 function getJSONTriple(center,level)
 {
-	var l=getItemJSONProps(center).box;
+	var l=center.getItemJSONProps().box;
 	return {
 		'topTree': getJSONItemConclusionTree(center,level-1),
-		'center': l,//+{(level==1&&getValidconclusionConns(center)?8)|(level==1&&getValidArgs(center)?16)},
+		'root': l,//+{(level==1&&getValidconclusionConns(center)?8)|(level==1&&getValidArgs(center)?16)},
 		'bottomTree': getJSONArgumentTree(center,level-1)
 	};
 }
@@ -224,8 +236,9 @@ function testFill(target)
 	connectItems(p5,p6,1);
 	connectItems(p6,p2,1);
 	connectItems(p4,p2,-1);
-	connectItems(p7,p5.conclusionConns[p6.id],-1);
-	connectItems(p8,p7.conclusionConns[p5.conclusionConns[p6.id].id],1);
+	//alert(p5.conclusionConns[p6.id]);
+	//connectItems(p7,p5.conclusionConns[p6.id],-1);
+	//connectItems(p8,p7.conclusionConns[p5.conclusionConns[p6.id].id],1);
 	var currentItem=p2;
 	fillSpider(target,getJSONTriple(currentItem,-1));
 }
