@@ -75,13 +75,16 @@ Item.prototype.getText=function()
 	var p=this.probability;
 	return this.hasArrowPoint?(p>=0?'supports'+(p==1.0?'':' '+p):'challenges'+(p==-1.0?'':' '+-p)):(p==1.0?null :''+p);
 }
-Item.prototype.getTagText=function(prop)
+Item.prototype.getMetaTexts=function(prop)
 {	
-	return '&#x2116;&nbsp;'+this.id+(prop!=1.0?'&nbsp;&nbsp;P&nbsp;'+prop:'');
+	var a=[this.id];
+	if (prop!=1.0)
+		a.push('P&nbsp;'+prop);
+	return a;
 }
 Item.prototype.getItemJSONProps=function()
 {
-	return { 'box': { 'text':this.getText(),'probBox':this.getTagText(this.calcProbability()),'color':this.getColor() } };
+	return { 'box': { 'text':this.getText(),'metaTexts':this.getMetaTexts(this.calcProbability()),'color':this.getColor() } };
 }
 
 function Or()
@@ -128,15 +131,31 @@ Proposition.prototype.getText=function()
 }
 
 Proposition.prototype.hasArrowPoint = 1;
+
+Proposition.prototype.getColor=function()
+{
+	var cp=this.calcProbability();
+	return getCSSColor(cp,[0,1,1]);
+}
+
 /*
-	$.getTagText=?<prop><[Item]this>
+	$.getMetaTexts=?<prop><[Item]this>
 	(	.p=getPropData(this).probability;
-		(Item.prototype.getTagText(prop))+(p!=1.0 ? '&nbsp;('+p+')')
+		(Item.prototype.getMetaTexts(prop))+(p!=1.0 ? '&nbsp;('+p+')')
 	);
 */
-Proposition.prototype.getTagText=function(prop)
+Proposition.prototype.getMetaTexts=function(prop)
 {	
-	return (Item.prototype.getTagText.call(this,prop))+(this.probability!=1.0 ? '&nbsp;('+this.probability+')' : '');
+	var a=Item.prototype.getMetaTexts.call(this,prop);
+	if (this.probability!=1.0)
+	{
+		for (var t in this.argumentConns) // this strange loop just to check whether array is nonempty
+		{
+			a[1]+='&nbsp;('+this.probability+')';
+			break;
+		}
+	}
+	return a;
 }
 
 function connectItems(argument,conclusion, strength)
@@ -186,10 +205,10 @@ function getJSONArgumentTree(object,level)
 	var r=[];
 	for (var i in object.argumentConns)
 	{
-		var ps=object.getItemJSONProps();
+//		alert(ps.box.text);
 		var cc=object.argumentConns[i];
-
 		var a=cc.argument;
+		var ps=a.getItemJSONProps();
 		{
 			ps.arrow=
 				{

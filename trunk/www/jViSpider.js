@@ -1,4 +1,3 @@
-showProbabilities=true;//false;
 lineMargin=20;
 lineWidth=5;
 lineOffset=lineMargin/2;
@@ -10,11 +9,11 @@ function makeItemBox(props)
 	var b=document.createElement("div");
 	b.className='ViSpi_box';
 	b.style.backgroundColor=props.color;
-	if (showProbabilities)
+	for(var i in props.metaTexts)
 	{
 		e=document.createElement("div");
-		e.className='ViSpi_probabilityBox';
-		e.innerHTML=props.probBox;
+		e.className='ViSpi_MetaBox';
+		e.innerHTML=props.metaTexts[i];
 		b.appendChild(e);
 	}
 	{
@@ -97,8 +96,8 @@ function px(v)
 			var onclick;
 			var backwards=s!=null && s.offsetTop>d.offsetTop;
 			var isMeta=conns[c].isMeta;
-			var yd=d.offsetTop+(d.offsetHeight-lineWidth)/2;
-			var ys=s==null?yd:s.offsetTop +(isMeta?(s.offsetHeight+lineWidth)/2:(backwards?0:s.offsetHeight));
+			var yd=d.offsetTop+Math.floor((d.offsetHeight-lineWidth)/2);
+			var ys=s==null?yd:s.offsetTop +(isMeta?Math.floor((s.offsetHeight+lineWidth)/2):(backwards?0:s.offsetHeight));
 			var y= backwards ? yd : ys;
 			var h=(backwards ? ys : yd ) - y;
 			{
