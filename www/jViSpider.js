@@ -15,7 +15,7 @@ function makeItemBox(props)
 		e.innerHTML=props.text;
 		b.appendChild(e);
 	}
-	b.addEventListener('click',function(event) { props.onclick(props,b);/*itemClick(props,b);*/ event.stopPropagation();},false);
+	b.addEventListener('click',function(event) { props.onclick(b);/*itemClick(props,b);*/ event.stopPropagation();},false);
 //	b.onclick=function() {  return false;}
 
 	return b;
@@ -43,7 +43,7 @@ function px(v)
 			var box=makeItemBox(props.box);
 			box.id='b'+id;
 			box.style.minWidth=px(lineMargin*props.children.length);
-			var linef=function(props,box) { return function(event) { props.arrow.onclick(props.arrow,box); event.stopPropagation(); } }(props,box);
+			var lineFunc=function(arrow,target) { return function(event) { arrow.onclick(target); event.stopPropagation(); } };
 			elemCounter++;
 			var arrowText=null;
 			var offset=boxOffset;
@@ -55,12 +55,13 @@ function px(v)
 			if (props.arrow.text!=null)
 			{	arrowText=document.createElement("div");
 				arrowText.className='ViSpi_arrowText';
+				arrowText.addEventListener('click',lineFunc(props.arrow,arrowText),false);
 				arrowText.style.marginTop=px(!backwards&&(props.arrow.mode&1)&&i==0?10:0);
 				arrowText.style.marginLeft=px(connOffset-8);
 				arrowText.innerHTML=props.arrow.text;
 				arrowText.style.backgroundColor=props.arrow.color;
 			}
-			conns.push({'dx':connOffset-offset,'s':parentId,'w':w,'d':box.id,'isMeta':isMeta,'props':props.arrow });
+			conns.push({'dx':connOffset-offset,'s':parentId,'w':w,'d':box.id,'isMeta':isMeta,'props':props.arrow, 'onclick': lineFunc });
 			if (backwards)
 			{	genItems(props.children,backwards,offset,false,box.id);
 				container.appendChild(box);
@@ -95,8 +96,8 @@ function px(v)
 			var h=(backwards ? ys : yd ) - y;
 			{
 				var line=document.createElement("div");
-				onclick=function(props,line) { return function(event) { props.onclick(props.box); event.stopPropagation(); } }(conns[c].props,line);
 				line.className='ViSpi_line';
+				onclick = conns[c].onclick(conns[c],line);
 				line.addEventListener('click',onclick,false);
 				line.style.left=px(x);
 				line.style.width=px(lineWidth);//px(conns[c].w);

@@ -248,6 +248,11 @@ function getJSONTriple(center,level)
 	};
 }
 
+function drawArgumentMap(Target, root)
+{
+	fillSpider(target,getJSONTriple(root,-1));
+}
+
 function testFill(target)
 {
 	var p1=new Proposition('final conclusion');
