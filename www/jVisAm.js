@@ -1,4 +1,6 @@
-function getCSSColor(v,rgb)
+ArgMap = new Object();
+
+ArgMap.getCSSColor = function(v,rgb)
 {
 	var l=Math.floor(v*85);
 	l=[170-l,170+l];
@@ -6,14 +8,16 @@ function getCSSColor(v,rgb)
 	return '#'+l[rgb[0]]+l[rgb[1]]+l[rgb[2]];
 }
 
-nextID=0;
-function getNewId()
 {
-	nextID++;
-	return nextID;
+	var nextID=0;
+	function getNewId()
+	{
+		nextID++;
+		return nextID;
+	}
 }
 
-function Connection(argument,conclusion,probability)
+ArgMap.Connection = function(argument,conclusion,probability)
 {
 	this.id=getNewId();
 	this.argumentConns={};
@@ -21,12 +25,12 @@ function Connection(argument,conclusion,probability)
 	this.conclusion=conclusion;
 	this.probability=probability;
 }
-Connection.prototype.isArrowTarget=1;
-/*Connection.prototype.getconclusionConns=function()
+ArgMap.Connection.prototype.isArrowTarget=1;
+/*ArgMap.Connection.prototype.getconclusionConns=function()
 {
 	return {this.conclusion.id};
 }*/
-Connection.prototype.calcProbability=function()
+ArgMap.Connection.prototype.calcProbability=function()
 {
 	var m=this.probability;
 	//putline(.?{this.data->calcProbability()}); putline(.?{this.argument->getText(),this.conclusion->getText()});
@@ -35,29 +39,29 @@ Connection.prototype.calcProbability=function()
 	}
 	return (this.probability<0?1.0:0.0)+(m*this.argument.calcProbability());
 }
-Connection.prototype.getColor=function()
+ArgMap.Connection.prototype.getColor=function()
 {
 	var cp=this.calcProbability();
-	return getCSSColor(this.probability<0?1.0-cp:cp,this.probability<0?[1,0,0]:[0,1,0]);
+	return ArgMap.getCSSColor(this.probability<0?1.0-cp:cp,this.probability<0?[1,0,0]:[0,1,0]);
 }
-Connection.prototype.getText=function()
+ArgMap.Connection.prototype.getText=function()
 {
 	var p=this.probability;
 	return this.conclusion.isArrowTarget?(p>=0?'supports'+(p==1.0?'':' '+p):'challenges'+(p==-1.0?'':' '+-p)):(p==1.0?null :''+p);
 }
 
-function Item()
+ArgMap.Item = function()
 {
 	this.id=getNewId();
 	this.argumentConns={};
 	this.conclusionConns={};
 }
-Item.prototype.isArrowTarget=0;
-/*Item.prototype.getconclusionConns=function()
+ArgMap.Item.prototype.isArrowTarget=0;
+/*ArgMap.Item.prototype.getconclusionConns=function()
 {
 	return this.conclusionConns;
 }*/
-Item.prototype.calcProbability=function()
+ArgMap.Item.prototype.calcProbability=function()
 {
 	var m=1.0;
 	for(var a in this.argumentConns)
@@ -65,23 +69,23 @@ Item.prototype.calcProbability=function()
 	}
 	return m;
 }
-Item.prototype.getColor=function()
+ArgMap.Item.prototype.getColor=function()
 {
 	var cp=this.calcProbability();
-	return getCSSColor(cp,cp<0?[1,0,0]:[0,1,0]);
+	return ArgMap.getCSSColor(cp,cp<0?[1,0,0]:[0,1,0]);
 }
-Item.prototype.getMetaTexts=function(prob)
+ArgMap.Item.prototype.getMetaTexts=function(prob)
 {	
 	var a=[];//if you want to show internal id's, use [this.id];
 	if (prob!=1.0)
-		a.push('P&nbsp;'+probabilityToString(prob));
+		a.push('P&nbsp;'+ArgMap.probabilityToString(prob));
 	return a;
 }
-function probabilityToString(p)
+ArgMap.probabilityToString = function(p)
 {
 	return p.toPrecision(4).replace(/0*$/g,'');
 }
-function formatTextAndMetaTexts(text,metaTexts)
+ArgMap.formatTextAndMetaTexts = function(text,metaTexts)
 {
 	var pt='';
 	for(var i in metaTexts)
@@ -90,17 +94,17 @@ function formatTextAndMetaTexts(text,metaTexts)
 	}
 	return pt+text;
 }
-Item.prototype.getItemJSONProps=function()
+ArgMap.Item.prototype.getItemJSONProps=function()
 {
-	return { 'box': { 'text':formatTextAndMetaTexts(this.getText(),this.getMetaTexts(this.calcProbability())),'color':this.getColor() } };
+	return { 'box': { 'text':ArgMap.formatTextAndMetaTexts(this.getText(),this.getMetaTexts(this.calcProbability())),'color':this.getColor() } };
 }
 
-function Or()
+ArgMap.Or = function()
 {
-	Item.call(this);
+	ArgMap.Item.call(this);
 }
-Or.prototype = new Item;
-Or.prototype.calcProbability=function()
+ArgMap.Or.prototype = new ArgMap.Item;
+ArgMap.Or.prototype.calcProbability=function()
 {
 	var m=1.0;
 	for(var a in this.argumentConns)
@@ -108,72 +112,72 @@ Or.prototype.calcProbability=function()
 	}
 	return 1.0-m;
 }
-Or.prototype.getText=function()
+ArgMap.Or.prototype.getText=function()
 {
 	return 'or';
 }
-function And()
+ArgMap.And = function()
 {
-	Item.call(this);
+	ArgMap.Item.call(this);
 }
-And.prototype = new Item;
-And.prototype.getText=function()
+ArgMap.And.prototype = new ArgMap.Item;
+ArgMap.And.prototype.getText=function()
 {
 	return 'and';
 }
 
-function Proposition(text,probability)
+ArgMap.Proposition = function(text,probability)
 {
-	Item.call(this);
+	ArgMap.Item.call(this);
 	this.text=text;
 	this.probability=probability==null?1.0:probability;
 }
-Proposition.prototype = new Item;
-Proposition.prototype.calcProbability=function()
+ArgMap.Proposition.prototype = new ArgMap.Item;
+ArgMap.Proposition.prototype.calcProbability=function()
 {
-	return this.probability * Item.prototype.calcProbability.call(this);
+	return this.probability * ArgMap.Item.prototype.calcProbability.call(this);
 }
-Proposition.prototype.getText=function()
+ArgMap.Proposition.prototype.getText=function()
 {
 	return this.text;
 }
 
-Proposition.prototype.isArrowTarget = 1;
+ArgMap.Proposition.prototype.isArrowTarget = 1;
 
-Proposition.prototype.getColor=function()
+ArgMap.Proposition.prototype.getColor=function()
 {
 	var cp=this.calcProbability();
-	return getCSSColor(cp,[0,1,1]);
+	return ArgMap.getCSSColor(cp,[0,1,1]);
 }
 
 /*
-	$.getMetaTexts=?<prop><[Item]this>
+	$.getMetaTexts=?<prop><[ArgMap.Item]this>
 	(	.p=getPropData(this).probability;
-		(Item.prototype.getMetaTexts(prop))+(p!=1.0 ? '&nbsp;('+p+')')
+		(ArgMap.Item.prototype.getMetaTexts(prop))+(p!=1.0 ? '&nbsp;('+p+')')
 	);
 */
-Proposition.prototype.getMetaTexts=function(prob)
+ArgMap.Proposition.prototype.getMetaTexts=function(prob)
 {	
-	var a=Item.prototype.getMetaTexts.call(this,prob);
+	var a=ArgMap.Item.prototype.getMetaTexts.call(this,prob);
 	if (this.probability!=1.0)
 	{
 		for (var t in this.argumentConns) // this strange loop just to check whether array is nonempty
 		{
-			a[1]+='&nbsp;('+probabilityToString(this.probability)+')';
+			a[1]+='&nbsp;('+ArgMap.probabilityToString(this.probability)+')';
 			break;
 		}
 	}
 	return a;
 }
 
-function connectItems(argument,conclusion, strength)
+ArgMap.connectItems = function(argument,conclusion, strength)
 {
-	var c=new Connection(argument,conclusion,strength);
+	var c=new ArgMap.Connection(argument,conclusion,strength);
 	argument.conclusionConns[conclusion.id]=c;
 	conclusion.argumentConns[argument.id]=c;
 }
 
-function getJSONItemConclusionTree(item,level)
+ArgMap.getJSONItemConclusionTree = function(item,level)
 {
 	if (!level)
 		return [];
@@ -183,7 +187,7 @@ function getJSONItemConclusionTree(item,level)
 		var cc=item.conclusionConns[i];
 		var c=cc.conclusion;
 		//.c=item->getColor();
-		if (c.prototype!=Connection.prototype)
+		if (c.prototype!=ArgMap.Connection.prototype)
 		{
 			var ps=c.getItemJSONProps();
 			ps.arrow=
@@ -193,8 +197,8 @@ function getJSONItemConclusionTree(item,level)
 					//'urlTail': urlTailForConnection(item,$.key), 
 					'text': cc.getText()
 				};
-			ps.metaChildren=getJSONArgumentTree(cc,level-1);
-			ps.children=getJSONItemConclusionTree(c,level-1);
+			ps.metaChildren=ArgMap.getJSONArgumentTree(cc,level-1);
+			ps.children=ArgMap.getJSONItemConclusionTree(c,level-1);
 			r.push( [ c.id, ps ] );
 		}
 	}
@@ -206,7 +210,7 @@ function getJSONItemConclusionTree(item,level)
 	return rr;
 }
 
-function getJSONArgumentTree(object,level)
+ArgMap.getJSONArgumentTree = function(object,level)
 {
 	if (!level)
 		return [];
@@ -225,8 +229,8 @@ function getJSONArgumentTree(object,level)
 					//'urlTail': urlTailForConnection(item,$.key), 
 					'text': cc.getText()
 				};
-			ps.metaChildren=getJSONArgumentTree(cc,level-1);
-			ps.children=getJSONArgumentTree(a,level-1);
+			ps.metaChildren=ArgMap.getJSONArgumentTree(cc,level-1);
+			ps.children=ArgMap.getJSONArgumentTree(a,level-1);
 			r.push( [ a.id, ps ] );
 		}
 	}
@@ -238,67 +242,47 @@ function getJSONArgumentTree(object,level)
 	return rr;
 }
 
-function getJSONTriple(center,level)
+ArgMap.getJSONTriple = function(center,level)
 {
 	var l=center.getItemJSONProps().box;
 	return {
-		'topTree': getJSONItemConclusionTree(center,level-1),
+		'topTree': ArgMap.getJSONItemConclusionTree(center,level-1),
 		'root': l,//+{(level==1&&getValidconclusionConns(center)?8)|(level==1&&getValidArgs(center)?16)},
-		'bottomTree': getJSONArgumentTree(center,level-1)
+		'bottomTree': ArgMap.getJSONArgumentTree(center,level-1)
 	};
 }
 
-function drawArgumentMap(Target, root)
+ArgMap.draw = function(target, root)
 {
-	fillSpider(target,getJSONTriple(root,-1));
+	if (typeof(root)=='string')
+		root=ArgMap.parse(root);
+	fillSpider(target,ArgMap.getJSONTriple(root,-1));
 }
 
-function testFill(target)
-{
-	var p1=new Proposition('final conclusion');
-	var p2=new Proposition('center conclusion');
-	var p3=new Proposition('arg 1');
-	var p4=new Proposition('arg 2',0.2);
-	var p5=new Proposition('arg 3');
-	var p6=new Or();
-	var p7=new Proposition('arg 4');
-	var p8=new Proposition('arg 5');
-	connectItems(p2,p1,1);
-	connectItems(p3,p6,1);
-	connectItems(p5,p6,1);
-	connectItems(p6,p2,1);
-	connectItems(p4,p2,-1);
-	//alert(p5.conclusionConns[p6.id]);
-	//connectItems(p7,p5.conclusionConns[p6.id],-1);
-	//connectItems(p8,p7.conclusionConns[p5.conclusionConns[p6.id].id],1);
-	var currentItem=p2;
-	fillSpider(target,getJSONTriple(currentItem,-1));
-}
-
-function processStruct(struct, parent,grandParent)
+ArgMap.processStruct = function(struct, parent,grandParent)
 {
 	var elems=/^(<?)([+\-]?)((?:[01]\.?[0-9]*)?) *((?:\[[01]\.?[0-9]*\])?) *(.+)/.exec(struct[0]);
-	var  item=/^or$/i.test(elems[5]) ? new Or() : (/^and$/i.test(elems[5]) ? new And() : new Proposition(elems[5]) ) ;
+	var  item=/^or$/i.test(elems[5]) ? new ArgMap.Or() : (/^and$/i.test(elems[5]) ? new ArgMap.And() : new ArgMap.Proposition(elems[5]) ) ;
 	if (elems[4]!='')
 		item.probability=parseFloat(elems[4].substr(1));
 	var strength=(elems[2]=='-'?-1.0:1.0) * (elems[3]=='' ? 1.0: parseFloat(elems[3]));
 	if (elems[1]=='<')
-	{	connectItems(item,parent.conclusionConns[grandParent.id],strength);
+	{	ArgMap.connectItems(item,parent.conclusionConns[grandParent.id],strength);
 	}
 	else
 	{
 		if (parent!=null)
 		{	//alert(item.text);
 			//alert(parent.text);
-			connectItems(item,parent,strength);
+			ArgMap.connectItems(item,parent,strength);
 		}
 	}
 	for (var i in struct[1])
-		processStruct(struct[1][i],item,parent);
+		ArgMap.processStruct(struct[1][i],item,parent);
 	return item; 
 }
 
-function appendInDepth(struct,depth,item)
+ArgMap.appendInDepth = function(struct,depth,item)
 {
 	var s=struct;
 	for(var i=0; i<depth; i++)
@@ -308,7 +292,7 @@ function appendInDepth(struct,depth,item)
 	s.push([item,[]]);
 }
 
-function parseTree(text)
+ArgMap.parse = function(text)
 {
 	var struct=[];
 	var lines=text.split("\n");
@@ -319,24 +303,7 @@ function parseTree(text)
 			continue;
 		var tabs=line.match(/^(\t*)/)[0].length;
 		line=line.substr(tabs);
-		appendInDepth(struct,tabs,line);
+		ArgMap.appendInDepth(struct,tabs,line);
 	}
-	return processStruct(struct[0],null,null);
+	return ArgMap.processStruct(struct[0],null,null);
 }	
-
-function testParse(target)
-{
-var str=
-"All is nice\n\
-	Bruno is happy and healthy\n\
-		+ and\n\
-			[0.7] Bruno seems to wag his tail\n\
-			Bruno is a dog\n\
-			A happy dog is wagging its tail\n\
-				-0.2 Sometimes, a dog is wagging its tail in anticipation instead\n\
-		- Bruno's boss is not happy now\n\
-			<- A dogs happiness is not affected by the emotional state of its boss\n\
-		+ Bruno had his health check yesterday and nothing was found\n"
-	var currentItem=parseTree(str);
-	fillSpider(target,getJSONTriple(currentItem,-1));
-}

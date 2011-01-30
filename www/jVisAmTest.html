@@ -5,10 +5,42 @@
 <script src="jVisAm.js"></script>
 <script src="jViSpider.js"></script>
 <script>
+
+function test(target)
+{
+	var p1=new Proposition('final conclusion');
+	var p2=new Proposition('center conclusion');
+	var p3=new Proposition('arg 1');
+	var p4=new Proposition('arg 2',0.2);
+	var p5=new Proposition('arg 3');
+	var p6=new Or();
+	var p7=new Proposition('arg 4');
+	var p8=new Proposition('arg 5');
+	connectItems(p2,p1,1);
+	connectItems(p3,p6,1);
+	connectItems(p5,p6,1);
+	connectItems(p6,p2,1);
+	connectItems(p4,p2,-1);
+	//alert(p5.conclusionConns[p6.id]);
+	//connectItems(p7,p5.conclusionConns[p6.id],-1);
+	//connectItems(p8,p7.conclusionConns[p5.conclusionConns[p6.id].id],1);
+	ArgMap.draw(target,p2);
+}
+
 function init()
 {
-	//testFill(document.getElementById('test'));
-	testParse(document.getElementById('test'));
+var str=
+"All is nice\n\
+	Bruno is happy and healthy\n\
+		+ and\n\
+			[0.7] Bruno seems to wag his tail\n\
+			Bruno is a dog\n\
+			A happy dog is wagging its tail\n\
+				-0.2 Sometimes, a dog is wagging its tail in anticipation instead\n\
+		- Bruno's boss is not happy now\n\
+			<- A dogs happiness is not affected by the emotional state of its boss\n\
+		+ Bruno had his health check yesterday and nothing was found\n"
+	ArgMap.draw(document.getElementById('test'), str);
 }
 </script>
 </head>
