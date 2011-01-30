@@ -77,7 +77,7 @@ Item.prototype.getText=function()
 }
 Item.prototype.getMetaTexts=function(prob)
 {	
-	var a=[this.id];
+	var a=[];//if you want to show internal id's, use [this.id];
 	if (prob!=1.0)
 		a.push('P&nbsp;'+probabilityToString(prob));
 	return a;
