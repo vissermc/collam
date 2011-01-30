@@ -21,7 +21,7 @@ function Connection(argument,conclusion,probability)
 	this.conclusion=conclusion;
 	this.probability=probability;
 }
-Connection.prototype.hasArrowPoint=1;
+Connection.prototype.isArrowTarget=1;
 /*Connection.prototype.getconclusionConns=function()
 {
 	return {this.conclusion.id};
@@ -43,7 +43,7 @@ Connection.prototype.getColor=function()
 Connection.prototype.getText=function()
 {
 	var p=this.probability;
-	return this.hasArrowPoint?(p>=0?'supports'+(p==1.0?'':' '+p):'challenges'+(p==-1.0?'':' '+-p)):(p==1.0?null :''+p);
+	return this.conclusion.isArrowTarget?(p>=0?'supports'+(p==1.0?'':' '+p):'challenges'+(p==-1.0?'':' '+-p)):(p==1.0?null :''+p);
 }
 
 function Item()
@@ -52,7 +52,7 @@ function Item()
 	this.argumentConns={};
 	this.conclusionConns={};
 }
-Item.prototype.hasArrowPoint=0;
+Item.prototype.isArrowTarget=0;
 /*Item.prototype.getconclusionConns=function()
 {
 	return this.conclusionConns;
@@ -69,11 +69,6 @@ Item.prototype.getColor=function()
 {
 	var cp=this.calcProbability();
 	return getCSSColor(cp,cp<0?[1,0,0]:[0,1,0]);
-}
-Item.prototype.getText=function()
-{
-	var p=this.probability;
-	return this.hasArrowPoint?(p>=0?'supports'+(p==1.0?'':' '+p):'challenges'+(p==-1.0?'':' '+-p)):(p==1.0?null :''+p);
 }
 Item.prototype.getMetaTexts=function(prob)
 {	
@@ -143,7 +138,7 @@ Proposition.prototype.getText=function()
 	return this.text;
 }
 
-Proposition.prototype.hasArrowPoint = 1;
+Proposition.prototype.isArrowTarget = 1;
 
 Proposition.prototype.getColor=function()
 {
@@ -193,7 +188,7 @@ function getJSONItemConclusionTree(item,level)
 			var ps=c.getItemJSONProps();
 			ps.arrow=
 				{
-					'mode': (c.hasArrowPoint*2)/*|(@$.key.argumentConns>1?4)|(level==1&&$.key.conclusionConns?8)*/,
+					'mode': (c.isArrowTarget*2)/*|(@$.key.argumentConns>1?4)|(level==1&&$.key.conclusionConns?8)*/,
 					'color': cc.getColor(),
 					//'urlTail': urlTailForConnection(item,$.key), 
 					'text': cc.getText()
@@ -225,7 +220,7 @@ function getJSONArgumentTree(object,level)
 		{
 			ps.arrow=
 				{
-					'mode': (/*object.hasArrowPoint|*/1)/*|(@$.key.argumentConns>1?4)|(level==1&&$.key.conclusionConns?8)*/,
+					'mode': (object.isArrowTarget?1:0)/*|(@$.key.argumentConns>1?4)|(level==1&&$.key.conclusionConns?8)*/,
 					'color': cc.getColor(),
 					//'urlTail': urlTailForConnection(item,$.key), 
 					'text': cc.getText()
