@@ -84,14 +84,7 @@ div.ViSpi_arrow2 img
 	position:relative;bottom:9px;
 }
 
-div.ViSpi_MetaBox
-{
-	background-color: white;
-	background-color: rgba(255,255,255,0.5);
-	-moz-border-radius: 4px;
-	border-radius: 4px;	
-}
-div.ViSpi_itemText, div.ViSpi_MetaBox
+div.ViSpi_itemText
 {
 	display:inline-block;
 	padding: 2px;

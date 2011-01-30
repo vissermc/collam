@@ -75,16 +75,29 @@ Item.prototype.getText=function()
 	var p=this.probability;
 	return this.hasArrowPoint?(p>=0?'supports'+(p==1.0?'':' '+p):'challenges'+(p==-1.0?'':' '+-p)):(p==1.0?null :''+p);
 }
-Item.prototype.getMetaTexts=function(prop)
+Item.prototype.getMetaTexts=function(prob)
 {	
 	var a=[this.id];
-	if (prop!=1.0)
-		a.push('P&nbsp;'+prop);
+	if (prob!=1.0)
+		a.push('P&nbsp;'+probabilityToString(prob));
 	return a;
+}
+function probabilityToString(p)
+{
+	return p.toPrecision(4).replace(/0*$/g,'');
+}
+function formatTextAndMetaTexts(text,metaTexts)
+{
+	var pt='';
+	for(var i in metaTexts)
+	{
+		pt+='<div class="VisAm_MetaBox">'+metaTexts[i]+'</div>';
+	}
+	return pt+text;
 }
 Item.prototype.getItemJSONProps=function()
 {
-	return { 'box': { 'text':this.getText(),'metaTexts':this.getMetaTexts(this.calcProbability()),'color':this.getColor() } };
+	return { 'box': { 'text':formatTextAndMetaTexts(this.getText(),this.getMetaTexts(this.calcProbability())),'color':this.getColor() } };
 }
 
 function Or()
@@ -144,14 +157,14 @@ Proposition.prototype.getColor=function()
 		(Item.prototype.getMetaTexts(prop))+(p!=1.0 ? '&nbsp;('+p+')')
 	);
 */
-Proposition.prototype.getMetaTexts=function(prop)
+Proposition.prototype.getMetaTexts=function(prob)
 {	
-	var a=Item.prototype.getMetaTexts.call(this,prop);
+	var a=Item.prototype.getMetaTexts.call(this,prob);
 	if (this.probability!=1.0)
 	{
 		for (var t in this.argumentConns) // this strange loop just to check whether array is nonempty
 		{
-			a[1]+='&nbsp;('+this.probability+')';
+			a[1]+='&nbsp;('+probabilityToString(this.probability)+')';
 			break;
 		}
 	}
@@ -259,5 +272,71 @@ function testFill(target)
 	//connectItems(p7,p5.conclusionConns[p6.id],-1);
 	//connectItems(p8,p7.conclusionConns[p5.conclusionConns[p6.id].id],1);
 	var currentItem=p2;
+	fillSpider(target,getJSONTriple(currentItem,-1));
+}
+
+function processStruct(struct, parent,grandParent)
+{
+	var elems=/^(<?)([+\-]?)((?:[01]\.?[0-9]*)?) *((?:\[[01]\.?[0-9]*\])?) *(.+)/.exec(struct[0]);
+	var  item=/^or$/i.test(elems[5]) ? new Or() : (/^and$/i.test(elems[5]) ? new And() : new Proposition(elems[5]) ) ;
+	if (elems[4]!='')
+		item.probability=parseFloat(elems[4].substr(1));
+	var strength=(elems[2]=='-'?-1.0:1.0) * (elems[3]=='' ? 1.0: parseFloat(elems[3]));
+	if (elems[1]=='<')
+	{	connectItems(item,parent.conclusionConns[grandParent.id],strength);
+	}
+	else
+	{
+		if (parent!=null)
+		{	//alert(item.text);
+			//alert(parent.text);
+			connectItems(item,parent,strength);
+		}
+	}
+	for (var i in struct[1])
+		processStruct(struct[1][i],item,parent);
+	return item; 
+}
+
+function appendInDepth(struct,depth,item)
+{
+	var s=struct;
+	for(var i=0; i<depth; i++)
+	{	s=s[s.length-1];
+		s=s[s.length-1];
+	}
+	s.push([item,[]]);
+}
+
+function parseTree(text)
+{
+	var struct=[];
+	var lines=text.split("\n");
+	for (i in lines)
+	{
+		var line=lines[i];
+		if (line.length==0)
+			continue;
+		var tabs=line.match(/^(\t*)/)[0].length;
+		line=line.substr(tabs);
+		appendInDepth(struct,tabs,line);
+	}
+	return processStruct(struct[0],null,null);
+}	
+
+function testParse(target)
+{
+var str=
+"All is nice\n\
+	Bruno is happy and healthy\n\
+		+ and\n\
+			[0.7] Bruno seems to wag his tail\n\
+			Bruno is a dog\n\
+			A happy dog is wagging its tail\n\
+				-0.2 Sometimes, a dog is wagging its tail in anticipation instead\n\
+		- Bruno's boss is not happy now\n\
+			<- A dogs happiness is not affected by the emotional state of its boss\n\
+		+ Bruno had his health check yesterday and nothing was found\n"
+	var currentItem=parseTree(str);
 	fillSpider(target,getJSONTriple(currentItem,-1));
 }

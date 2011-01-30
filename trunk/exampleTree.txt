@@ -1,12 +1,13 @@
-Request for adding GOGI_OPERA_EVT_IMEUPDATE when text or caret position changes
-	and
-		Mouse events, USB key events, javascript, cursor keys can change caret position and text outside our local onscreen keyboard
-		Text and caret position is needed for syncing with ime_update
-		Ime_update is needed by 2k12 oskb text entry
-			and
-				We want to be able to change the text without generating a key event
-					and
-						In 2k12 we want to be able to update text field on the screen for each multitap event
-							Expert reviews indicate people wait for the update on the screen before continuing typing, which is slow
-						We don't want to trigger auto-completion while user is busy with changing the character in multitap mode
-				Using ime_update is an existing method of updating text without generating key events
+All is nice
+	Bruno is happy and healthy
+		+ and
+			[0.7] Bruno seems to wag his tail
+			Bruno is a dog
+			A happy dog is wagging its tail
+				-0.2 Sometimes, a dog is wagging its tail in anticipation instead
+		- Bruno's boss is not happy now
+			<- A dogs happiness is not affected by the emotional state of its boss
+			<- bla 2
+			<- bla 3
+			Hello
+		+ Bruno had his health check yesterday and nothing was found
