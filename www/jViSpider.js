@@ -9,13 +9,6 @@ function makeItemBox(props)
 	var b=document.createElement("div");
 	b.className='ViSpi_box';
 	b.style.backgroundColor=props.color;
-	for(var i in props.metaTexts)
-	{
-		e=document.createElement("div");
-		e.className='ViSpi_MetaBox';
-		e.innerHTML=props.metaTexts[i];
-		b.appendChild(e);
-	}
 	{
 		e=document.createElement("div");
 		e.className='ViSpi_itemText';
