@@ -262,6 +262,8 @@ ArgMap.draw = function(target, root)
 ArgMap.processStruct = function(struct, parent,grandParent)
 {
 	var elems=/^(\*?)(<?)([+\-]?)((?:[01]\.?[0-9]*)?) *((?:\[[01]\.?[0-9]*\])?) *((?:\#[^ ]+)?) *(.*)/.exec(struct[0]);
+	if (elems.length<2)
+		return;
 	var id = elems[6]!='' ? elems[6].substr(1) : null;
 	
 	var  item=elems[7]=='' ? ArgMap.items[id] : 
@@ -314,7 +316,7 @@ ArgMap.parse = function(text)
 		var line=lines[i];
 		if (line.length==0)
 			continue;
-		var tabs=line.match(/^(\t*)/)[0].length;
+		var tabs=line.match(/^((?:\t|[ ][ ])*)/)[0].length;
 		line=line.substr(tabs);
 		ArgMap.appendInDepth(struct,tabs,line);
 	}
