@@ -42,12 +42,27 @@ var str=
 		+ Bruno had his health check yesterday and nothing was found\n\
 Bruno's boss does not have to worry\n\
 	#1\n\
-"
-	ArgMap.draw(document.getElementById('test'), str);
+";
+	alert(document.getElementById('text').innerHTML);
+	ArgMap.draw(document.getElementById('test'), document.getElementById('text').innerHTML);
 }
 </script>
 </head>
 <body onload="init();">
+<form>
+<textarea id="text" name="text" cols="120" rows="15" onchange="update(this);">Bruno can be taken for for a walk
+  * #1 Bruno is happy and healthy
+    + and
+      [0.7] Bruno seems to wag his tail
+      Bruno is a dog
+      A happy dog is wagging its tail
+        -0.2 Sometimes, a dog is wagging its tail in anticipation instead
+    - Bruno's boss is not happy now
+      <- A dogs happiness is not affected by the emotional state of its boss
+    + Bruno had his health check yesterday and nothing was found
+Bruno's boss does not have to worry
+  #1
+</textarea>
 <div id="test"></div>
 </body>
 </html>
