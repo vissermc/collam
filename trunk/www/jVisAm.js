@@ -261,12 +261,24 @@ ArgMap.draw = function(target, root)
 
 ArgMap.processStruct = function(struct, parent,grandParent)
 {
-	var elems=/^(<?)([+\-]?)((?:[01]\.?[0-9]*)?) *((?:\[[01]\.?[0-9]*\])?) *(.+)/.exec(struct[0]);
-	var  item=/^or$/i.test(elems[5]) ? new ArgMap.Or() : (/^and$/i.test(elems[5]) ? new ArgMap.And() : new ArgMap.Proposition(elems[5]) ) ;
-	if (elems[4]!='')
-		item.probability=parseFloat(elems[4].substr(1));
-	var strength=(elems[2]=='-'?-1.0:1.0) * (elems[3]=='' ? 1.0: parseFloat(elems[3]));
-	if (elems[1]=='<')
+	var elems=/^(\*?)(<?)([+\-]?)((?:[01]\.?[0-9]*)?) *((?:\[[01]\.?[0-9]*\])?) *((?:\#[^ ]+)?) *(.*)/.exec(struct[0]);
+	var id = elems[6]!='' ? elems[6].substr(1) : null;
+	
+	var  item=elems[7]=='' ? ArgMap.items[id] : 
+	(
+		/^or$/i.test(elems[7]) ? new ArgMap.Or() : 
+		(
+			/^and$/i.test(elems[7]) ? new ArgMap.And() : new ArgMap.Proposition(elems[7]) 
+		) 
+	);
+	if (id!=null)
+		ArgMap.items[id]=item;
+	if (elems[1]=='*')
+		ArgMap.rootItem=item;
+	if (elems[5]!='')
+		item.probability=parseFloat(elems[5].substr(1));
+	var strength=(elems[3]=='-'?-1.0:1.0) * (elems[4]=='' ? 1.0: parseFloat(elems[4]));
+	if (elems[2]=='<')
 	{	ArgMap.connectItems(item,parent.conclusionConns[grandParent.id],strength);
 	}
 	else
@@ -285,9 +297,8 @@ ArgMap.processStruct = function(struct, parent,grandParent)
 ArgMap.appendInDepth = function(struct,depth,item)
 {
 	var s=struct;
-	for(var i=0; i<depth; i++)
+	for(var i=0; i<depth*2; i++)
 	{	s=s[s.length-1];
-		s=s[s.length-1];
 	}
 	s.push([item,[]]);
 }
@@ -296,7 +307,9 @@ ArgMap.parse = function(text)
 {
 	var struct=[];
 	var lines=text.split("\n");
-	for (i in lines)
+	ArgMap.rootItem=null;
+	ArgMap.items={};
+	for (var i in lines)
 	{
 		var line=lines[i];
 		if (line.length==0)
@@ -305,5 +318,11 @@ ArgMap.parse = function(text)
 		line=line.substr(tabs);
 		ArgMap.appendInDepth(struct,tabs,line);
 	}
-	return ArgMap.processStruct(struct[0],null,null);
+	var r;
+	for(i in struct)
+	{
+		r = ArgMap.processStruct(struct[i],null,null);
+		//if (ArgMap.rootItem!=null) ArgMap.rootItem = r;
+	}
+	return ArgMap.rootItem!=null?ArgMap.rootItem:r;
 }	
