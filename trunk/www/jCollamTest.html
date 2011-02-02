@@ -1,8 +1,8 @@
 <html>
 <head>
 <link href="jSplitTree.css" rel="stylesheet" type="text/css" />
-<link href="jVisAm.css" rel="stylesheet" type="text/css" />
-<script src="jVisAm.js"></script>
+<link href="jCollam.css" rel="stylesheet" type="text/css" />
+<script src="jCollam.js"></script>
 <script src="jSplitTree.js"></script>
 <script>
 
@@ -24,7 +24,7 @@ function test(target)
 	//alert(p5.conclusionConns[p6.id]);
 	//connectItems(p7,p5.conclusionConns[p6.id],-1);
 	//connectItems(p8,p7.conclusionConns[p5.conclusionConns[p6.id].id],1);
-	ArgMap.draw(target,p2);
+	jCollam.draw(target,p2);
 }
 var textObj;
 function init()
@@ -51,8 +51,8 @@ Bruno's boss does not have to worry\n\
 function update()
 {
 	var o=document.getElementById('test');
-	ArgMap.clearTarget(o);
-	ArgMap.draw(o, textObj.value);	
+	jCollam.clearTarget(o);
+	jCollam.draw(o, textObj.value);	
 } 
 </script>
 </head>

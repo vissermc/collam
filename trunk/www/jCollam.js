@@ -1,18 +1,18 @@
-ArgMap = new Object();
+jCollam = new Object();
 
-ArgMap.draw = function(target, roots)
+jCollam.draw = function(target, roots)
 {
 	if (typeof(roots)=='string')
-		roots=ArgMap.parse(roots);
-	jSplitTree.create(target,ArgMap.getJSONTriple(roots,-1));
+		roots=jCollam.parse(roots);
+	jSplitTree.create(target,jCollam.getJSONTriple(roots,-1));
 }
 
-ArgMap.parse = function(text)
+jCollam.parse = function(text)
 {
 	var struct=[];
 	var lines=text.split("\n");
-	ArgMap.rootItem=null;
-	ArgMap.items={};
+	jCollam.rootItems=[];
+	jCollam.items={};
 	for (var i in lines)
 	{
 		var line=lines[i];
@@ -21,20 +21,22 @@ ArgMap.parse = function(text)
 		var tabs=line.match(/^(\t*)/)[0].length+Math.floor(line.match(/^([ ]*)/)[0].length/2);
 		line=line.replace(/^\s*/,'');
 		//alert(line);
-		ArgMap.appendInDepth(struct,tabs,line);
+		jCollam.appendInDepth(struct,tabs,line);
 	}
 	var r;
 	for(i in struct)
 	{
-		r = ArgMap.processStruct(struct[i],null,null);
-		//if (ArgMap.rootItem!=null) ArgMap.rootItem = r;
+		r = jCollam.processStruct(struct[i],null,null);
+		//if (jCollam.rootItem!=null) jCollam.rootItem = r;
 	}
-	return ArgMap.rootItem!=null?ArgMap.rootItem:r;
-}	
+	if (jCollam.rootItems.length==0)
+		jCollam.rootItems=[r];
+	return jCollam.rootItems;
+}
 
-ArgMap.clearTarget = function(target) { jSplitTree.clearTarget(target); }
+jCollam.clearTarget = function(target) { jSplitTree.clearTarget(target); }
 
-ArgMap.getCSSColor = function(v,rgb)
+jCollam.getCSSColor = function(v,rgb)
 {
 	var l=Math.floor(v*85);
 	l=[170-l,170+l];
@@ -51,7 +53,7 @@ ArgMap.getCSSColor = function(v,rgb)
 	}
 }
 
-ArgMap.Connection = function(argument,conclusion,probability)
+jCollam.Connection = function(argument,conclusion,probability)
 {
 	this.id=getNewId();
 	this.argumentConns={};
@@ -59,12 +61,12 @@ ArgMap.Connection = function(argument,conclusion,probability)
 	this.conclusion=conclusion;
 	this.probability=probability;
 }
-ArgMap.Connection.prototype.isArrowTarget=1;
-/*ArgMap.Connection.prototype.getconclusionConns=function()
+jCollam.Connection.prototype.isArrowTarget=1;
+/*jCollam.Connection.prototype.getconclusionConns=function()
 {
 	return {this.conclusion.id};
 }*/
-ArgMap.Connection.prototype.calcProbability=function()
+jCollam.Connection.prototype.calcProbability=function()
 {
 	var m=this.probability;
 	//putline(.?{this.data->calcProbability()}); putline(.?{this.argument->getText(),this.conclusion->getText()});
@@ -73,29 +75,29 @@ ArgMap.Connection.prototype.calcProbability=function()
 	}
 	return (this.probability<0?1.0:0.0)+(m*this.argument.calcProbability());
 }
-ArgMap.Connection.prototype.getColor=function()
+jCollam.Connection.prototype.getColor=function()
 {
 	var cp=this.calcProbability();
-	return ArgMap.getCSSColor(this.probability<0?1.0-cp:cp,this.probability<0?[1,0,0]:[0,1,0]);
+	return jCollam.getCSSColor(this.probability<0?1.0-cp:cp,this.probability<0?[1,0,0]:[0,1,0]);
 }
-ArgMap.Connection.prototype.getText=function()
+jCollam.Connection.prototype.getText=function()
 {
 	var p=this.probability;
 	return this.conclusion.isArrowTarget?(p>=0?'supports'+(p==1.0?'':' '+p):'challenges'+(p==-1.0?'':' '+-p)):(p==1.0?null :''+p);
 }
 
-ArgMap.Item = function()
+jCollam.Item = function()
 {
 	this.id=getNewId();
 	this.argumentConns={};
 	this.conclusionConns={};
 }
-ArgMap.Item.prototype.isArrowTarget=0;
-/*ArgMap.Item.prototype.getconclusionConns=function()
+jCollam.Item.prototype.isArrowTarget=0;
+/*jCollam.Item.prototype.getconclusionConns=function()
 {
 	return this.conclusionConns;
 }*/
-ArgMap.Item.prototype.calcProbability=function()
+jCollam.Item.prototype.calcProbability=function()
 {
 	var m=1.0;
 	for(var a in this.argumentConns)
@@ -103,42 +105,42 @@ ArgMap.Item.prototype.calcProbability=function()
 	}
 	return m;
 }
-ArgMap.Item.prototype.getColor=function()
+jCollam.Item.prototype.getColor=function()
 {
 	var cp=this.calcProbability();
-	return ArgMap.getCSSColor(cp,cp<0?[1,0,0]:[0,1,0]);
+	return jCollam.getCSSColor(cp,cp<0?[1,0,0]:[0,1,0]);
 }
-ArgMap.Item.prototype.getMetaTexts=function(prob)
+jCollam.Item.prototype.getMetaTexts=function(prob)
 {	
 	var a=[];//if you want to show internal id's, use [this.id];
 	if (prob!=1.0)
-		a.push('P&nbsp;'+ArgMap.probabilityToString(prob));
+		a.push('P&nbsp;'+jCollam.probabilityToString(prob));
 	return a;
 }
-ArgMap.probabilityToString = function(p)
+jCollam.probabilityToString = function(p)
 {
 	return p.toPrecision(4).replace(/(\.0)?0*$/,'$1');
 }
-ArgMap.formatTextAndMetaTexts = function(text,metaTexts)
+jCollam.formatTextAndMetaTexts = function(text,metaTexts)
 {
 	var pt='';
 	for(var i in metaTexts)
 	{
-		pt+='<div class="VisAm_MetaBox">'+metaTexts[i]+'</div>';
+		pt+='<div class="jCollam_MetaBox">'+metaTexts[i]+'</div>';
 	}
 	return pt+text;
 }
-ArgMap.Item.prototype.getItemJSONProps=function()
+jCollam.Item.prototype.getItemJSONProps=function()
 {
-	return { 'box': { 'text':ArgMap.formatTextAndMetaTexts(this.getText(),this.getMetaTexts(this.calcProbability())),'color':this.getColor() } };
+	return { 'box': { 'text':jCollam.formatTextAndMetaTexts(this.getText(),this.getMetaTexts(this.calcProbability())),'color':this.getColor() } };
 }
 
-ArgMap.Or = function()
+jCollam.Or = function()
 {
-	ArgMap.Item.call(this);
+	jCollam.Item.call(this);
 }
-ArgMap.Or.prototype = new ArgMap.Item;
-ArgMap.Or.prototype.calcProbability=function()
+jCollam.Or.prototype = new jCollam.Item;
+jCollam.Or.prototype.calcProbability=function()
 {
 	var m=1.0;
 	for(var a in this.argumentConns)
@@ -146,72 +148,72 @@ ArgMap.Or.prototype.calcProbability=function()
 	}
 	return 1.0-m;
 }
-ArgMap.Or.prototype.getText=function()
+jCollam.Or.prototype.getText=function()
 {
 	return 'or';
 }
-ArgMap.And = function()
+jCollam.And = function()
 {
-	ArgMap.Item.call(this);
+	jCollam.Item.call(this);
 }
-ArgMap.And.prototype = new ArgMap.Item;
-ArgMap.And.prototype.getText=function()
+jCollam.And.prototype = new jCollam.Item;
+jCollam.And.prototype.getText=function()
 {
 	return 'and';
 }
 
-ArgMap.Proposition = function(text,probability)
+jCollam.Proposition = function(text,probability)
 {
-	ArgMap.Item.call(this);
+	jCollam.Item.call(this);
 	this.text=text;
 	this.probability=probability==null?1.0:probability;
 }
-ArgMap.Proposition.prototype = new ArgMap.Item;
-ArgMap.Proposition.prototype.calcProbability=function()
+jCollam.Proposition.prototype = new jCollam.Item;
+jCollam.Proposition.prototype.calcProbability=function()
 {
-	return this.probability * ArgMap.Item.prototype.calcProbability.call(this);
+	return this.probability * jCollam.Item.prototype.calcProbability.call(this);
 }
-ArgMap.Proposition.prototype.getText=function()
+jCollam.Proposition.prototype.getText=function()
 {
 	return this.text;
 }
 
-ArgMap.Proposition.prototype.isArrowTarget = 1;
+jCollam.Proposition.prototype.isArrowTarget = 1;
 
-ArgMap.Proposition.prototype.getColor=function()
+jCollam.Proposition.prototype.getColor=function()
 {
 	var cp=this.calcProbability();
-	return ArgMap.getCSSColor(cp,[0,1,1]);
+	return jCollam.getCSSColor(cp,[0,1,1]);
 }
 
 /*
-	$.getMetaTexts=?<prop><[ArgMap.Item]this>
+	$.getMetaTexts=?<prop><[jCollam.Item]this>
 	(	.p=getPropData(this).probability;
-		(ArgMap.Item.prototype.getMetaTexts(prop))+(p!=1.0 ? '&nbsp;('+p+')')
+		(jCollam.Item.prototype.getMetaTexts(prop))+(p!=1.0 ? '&nbsp;('+p+')')
 	);
 */
-ArgMap.Proposition.prototype.getMetaTexts=function(prob)
+jCollam.Proposition.prototype.getMetaTexts=function(prob)
 {	
-	var a=ArgMap.Item.prototype.getMetaTexts.call(this,prob);
+	var a=jCollam.Item.prototype.getMetaTexts.call(this,prob);
 	if (this.probability!=1.0)
 	{
 		for (var t in this.argumentConns) // this strange loop just to check whether array is nonempty
 		{
-			a[1]+='&nbsp;('+ArgMap.probabilityToString(this.probability)+')';
+			a[1]+='&nbsp;('+jCollam.probabilityToString(this.probability)+')';
 			break;
 		}
 	}
 	return a;
 }
 
-ArgMap.connectItems = function(argument,conclusion, strength)
+jCollam.connectItems = function(argument,conclusion, strength)
 {
-	var c=new ArgMap.Connection(argument,conclusion,strength);
+	var c=new jCollam.Connection(argument,conclusion,strength);
 	argument.conclusionConns[conclusion.id]=c;
 	conclusion.argumentConns[argument.id]=c;
 }
 
-ArgMap.getJSONItemConclusionTree = function(item,level)
+jCollam.getJSONItemConclusionTree = function(item,level)
 {
 	if (!level)
 		return [];
@@ -221,7 +223,7 @@ ArgMap.getJSONItemConclusionTree = function(item,level)
 		var cc=item.conclusionConns[i];
 		var c=cc.conclusion;
 		//.c=item->getColor();
-		if (c.prototype!=ArgMap.Connection.prototype)
+		if (c.prototype!=jCollam.Connection.prototype)
 		{
 			var ps=c.getItemJSONProps();
 			ps.arrow=
@@ -231,8 +233,8 @@ ArgMap.getJSONItemConclusionTree = function(item,level)
 					//'urlTail': urlTailForConnection(item,$.key), 
 					'text': cc.getText()
 				};
-			ps.metaChildren=ArgMap.getJSONArgumentTree(cc,level-1);
-			ps.children=ArgMap.getJSONItemConclusionTree(c,level-1);
+			ps.metaChildren=jCollam.getJSONArgumentTree(cc,level-1);
+			ps.children=jCollam.getJSONItemConclusionTree(c,level-1);
 			r.push( [ c.id, ps ] );
 		}
 	}
@@ -244,7 +246,7 @@ ArgMap.getJSONItemConclusionTree = function(item,level)
 	return rr;
 }
 
-ArgMap.getJSONArgumentTree = function(object,level)
+jCollam.getJSONArgumentTree = function(object,level)
 {
 	if (!level)
 		return [];
@@ -263,8 +265,8 @@ ArgMap.getJSONArgumentTree = function(object,level)
 					//'urlTail': urlTailForConnection(item,$.key), 
 					'text': cc.getText()
 				};
-			ps.metaChildren=ArgMap.getJSONArgumentTree(cc,level-1);
-			ps.children=ArgMap.getJSONArgumentTree(a,level-1);
+			ps.metaChildren=jCollam.getJSONArgumentTree(cc,level-1);
+			ps.children=jCollam.getJSONArgumentTree(a,level-1);
 			r.push( [ a.id, ps ] );
 		}
 	}
@@ -276,54 +278,54 @@ ArgMap.getJSONArgumentTree = function(object,level)
 	return rr;
 }
 
-ArgMap.getJSONTriple = function(center,level)
+jCollam.getJSONTriple = function(center,level)
 {
 	var l=center.getItemJSONProps().box;
 	return {
-		'topTree': ArgMap.getJSONItemConclusionTree(center,level-1),
+		'topTree': jCollam.getJSONItemConclusionTree(center,level-1),
 		'root': l,//+{(level==1&&getValidconclusionConns(center)?8)|(level==1&&getValidArgs(center)?16)},
-		'bottomTree': ArgMap.getJSONArgumentTree(center,level-1)
+		'bottomTree': jCollam.getJSONArgumentTree(center,level-1)
 	};
 }
 
-ArgMap.processStruct = function(struct, parent,grandParent)
+jCollam.processStruct = function(struct, parent,grandParent)
 {
 	var elems=/^(\*?)(<?)([+\-]?)((?:[01]\.?[0-9]*)?) *((?:\[[01]\.?[0-9]*\])?) *((?:\#[^ ]+)?) *(.*)/.exec(struct[0]);
 	if (elems.length<2)
 		return;
 	var id = elems[6]!='' ? elems[6].substr(1) : null;
 	
-	var  item=elems[7]=='' ? ArgMap.items[id] : 
+	var  item=elems[7]=='' ? jCollam.items[id] : 
 	(
-		/^or$/i.test(elems[7]) ? new ArgMap.Or() : 
+		/^or$/i.test(elems[7]) ? new jCollam.Or() : 
 		(
-			/^and$/i.test(elems[7]) ? new ArgMap.And() : new ArgMap.Proposition(elems[7]) 
+			/^and$/i.test(elems[7]) ? new jCollam.And() : new jCollam.Proposition(elems[7]) 
 		) 
 	);
 	if (id!=null)
-		ArgMap.items[id]=item;
+		jCollam.items[id]=item;
 	if (elems[1]=='*')
-		ArgMap.rootItem=item;
+		jCollam.rootItems.push(item);
 	if (elems[5]!='')
 		item.probability=parseFloat(elems[5].substr(1));
 	var strength=(elems[3]=='-'?-1.0:1.0) * (elems[4]=='' ? 1.0: parseFloat(elems[4]));
 	if (elems[2]=='<')
-	{	ArgMap.connectItems(item,parent.conclusionConns[grandParent.id],strength);
+	{	jCollam.connectItems(item,parent.conclusionConns[grandParent.id],strength);
 	}
 	else
 	{
 		if (parent!=null)
 		{	//alert(item.text);
 			//alert(parent.text);
-			ArgMap.connectItems(item,parent,strength);
+			jCollam.connectItems(item,parent,strength);
 		}
 	}
 	for (var i in struct[1])
-		ArgMap.processStruct(struct[1][i],item,parent);
+		jCollam.processStruct(struct[1][i],item,parent);
 	return item; 
 }
 
-ArgMap.appendInDepth = function(struct,depth,item)
+jCollam.appendInDepth = function(struct,depth,item)
 {
 	var s=struct;
 	for(var i=0; i<depth*2; i++)
