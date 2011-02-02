@@ -1,5 +1,39 @@
 ArgMap = new Object();
 
+ArgMap.draw = function(target, roots)
+{
+	if (typeof(roots)=='string')
+		roots=ArgMap.parse(roots);
+	jSplitTree.create(target,ArgMap.getJSONTriple(roots,-1));
+}
+
+ArgMap.parse = function(text)
+{
+	var struct=[];
+	var lines=text.split("\n");
+	ArgMap.rootItem=null;
+	ArgMap.items={};
+	for (var i in lines)
+	{
+		var line=lines[i];
+		if (line.length==0)
+			continue;
+		var tabs=line.match(/^(\t*)/)[0].length+Math.floor(line.match(/^([ ]*)/)[0].length/2);
+		line=line.replace(/^\s*/,'');
+		//alert(line);
+		ArgMap.appendInDepth(struct,tabs,line);
+	}
+	var r;
+	for(i in struct)
+	{
+		r = ArgMap.processStruct(struct[i],null,null);
+		//if (ArgMap.rootItem!=null) ArgMap.rootItem = r;
+	}
+	return ArgMap.rootItem!=null?ArgMap.rootItem:r;
+}	
+
+ArgMap.clearTarget = function(target) { jSplitTree.clearTarget(target); }
+
 ArgMap.getCSSColor = function(v,rgb)
 {
 	var l=Math.floor(v*85);
@@ -83,7 +117,7 @@ ArgMap.Item.prototype.getMetaTexts=function(prob)
 }
 ArgMap.probabilityToString = function(p)
 {
-	return p.toPrecision(4).replace(/0*$/g,'');
+	return p.toPrecision(4).replace(/(\.0)?0*$/,'$1');
 }
 ArgMap.formatTextAndMetaTexts = function(text,metaTexts)
 {
@@ -252,13 +286,6 @@ ArgMap.getJSONTriple = function(center,level)
 	};
 }
 
-ArgMap.draw = function(target, root)
-{
-	if (typeof(root)=='string')
-		root=ArgMap.parse(root);
-	fillSpider(target,ArgMap.getJSONTriple(root,-1));
-}
-
 ArgMap.processStruct = function(struct, parent,grandParent)
 {
 	var elems=/^(\*?)(<?)([+\-]?)((?:[01]\.?[0-9]*)?) *((?:\[[01]\.?[0-9]*\])?) *((?:\#[^ ]+)?) *(.*)/.exec(struct[0]);
@@ -304,27 +331,3 @@ ArgMap.appendInDepth = function(struct,depth,item)
 	}
 	s.push([item,[]]);
 }
-
-ArgMap.parse = function(text)
-{
-	var struct=[];
-	var lines=text.split("\n");
-	ArgMap.rootItem=null;
-	ArgMap.items={};
-	for (var i in lines)
-	{
-		var line=lines[i];
-		if (line.length==0)
-			continue;
-		var tabs=line.match(/^((?:\t|[ ][ ])*)/)[0].length;
-		line=line.substr(tabs);
-		ArgMap.appendInDepth(struct,tabs,line);
-	}
-	var r;
-	for(i in struct)
-	{
-		r = ArgMap.processStruct(struct[i],null,null);
-		//if (ArgMap.rootItem!=null) ArgMap.rootItem = r;
-	}
-	return ArgMap.rootItem!=null?ArgMap.rootItem:r;
-}	
