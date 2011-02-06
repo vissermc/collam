@@ -4,7 +4,8 @@ jCollam.draw = function(target, roots)
 {
 	if (typeof(roots)=='string')
 		roots=jCollam.parse(roots);
-	jSplitTree.create(target,jCollam.getJSONTriple(roots,-1));
+	for(var i in roots)
+		jSplitTree.create(target,jCollam.getJSONTriple(roots[i],-1));
 }
 
 jCollam.parse = function(text)
@@ -34,7 +35,9 @@ jCollam.parse = function(text)
 	return jCollam.rootItems;
 }
 
-jCollam.clearTarget = function(target) { jSplitTree.clearTarget(target); }
+jCollam.shownArguments={}; 
+jCollam.shownConclusions={};
+jCollam.clearTarget = function(target) { jCollam.shownArguments={}; jCollam.shownConclusions={}; jSplitTree.clearTarget(target); }
 
 jCollam.getCSSColor = function(v,rgb)
 {
@@ -49,7 +52,8 @@ jCollam.getCSSColor = function(v,rgb)
 	function getNewId()
 	{
 		nextID++;
-		return nextID;
+		var s='000000'+nextID;
+		return s.substr(s.length-7);
 	}
 }
 
@@ -213,6 +217,8 @@ jCollam.connectItems = function(argument,conclusion, strength)
 	conclusion.argumentConns[argument.id]=c;
 }
 
+jCollam.setRepeatText= function(box) { box.text= 'See above: ('+box.text + ')'; }
+
 jCollam.getJSONItemConclusionTree = function(item,level)
 {
 	if (!level)
@@ -233,8 +239,17 @@ jCollam.getJSONItemConclusionTree = function(item,level)
 					//'urlTail': urlTailForConnection(item,$.key), 
 					'text': cc.getText()
 				};
-			ps.metaChildren=jCollam.getJSONArgumentTree(cc,level-1);
-			ps.children=jCollam.getJSONItemConclusionTree(c,level-1);
+			if( jCollam.shownConclusions[c.id])
+			{	
+				jCollam.setRepeatText(ps.box);
+			}
+			else
+			{	
+				jCollam.shownConclusions[c.id]=true;
+				if( !jCollam.shownArguments[c.id])
+					ps.metaChildren=jCollam.getJSONArgumentTree(cc,level-1);
+				ps.children=jCollam.getJSONItemConclusionTree(c,level-1);
+			}
 			r.push( [ c.id, ps ] );
 		}
 	}
@@ -265,8 +280,17 @@ jCollam.getJSONArgumentTree = function(object,level)
 					//'urlTail': urlTailForConnection(item,$.key), 
 					'text': cc.getText()
 				};
-			ps.metaChildren=jCollam.getJSONArgumentTree(cc,level-1);
-			ps.children=jCollam.getJSONArgumentTree(a,level-1);
+			if( jCollam.shownArguments[a.id])
+			{	
+				jCollam.setRepeatText(ps.box);
+			}
+			else
+			{	
+				jCollam.shownArguments[a.id]=true;
+				if( !jCollam.shownConclusions[a.id])
+					ps.metaChildren=jCollam.getJSONArgumentTree(cc,level-1);
+				ps.children=jCollam.getJSONArgumentTree(a,level-1);
+			}
 			r.push( [ a.id, ps ] );
 		}
 	}
@@ -280,11 +304,17 @@ jCollam.getJSONArgumentTree = function(object,level)
 
 jCollam.getJSONTriple = function(center,level)
 {
-	var l=center.getItemJSONProps().box;
+	var cb=center.getItemJSONProps().box;
+	var t=jCollam.shownConclusions[center.id];
+	var b=jCollam.shownArguments[center.id];
+	jCollam.shownConclusions[center.id]=true;
+	jCollam.shownArguments[center.id]=true;
+	if (t||b) 
+		jCollam.setRepeatText(cb);
 	return {
-		'topTree': jCollam.getJSONItemConclusionTree(center,level-1),
-		'root': l,//+{(level==1&&getValidconclusionConns(center)?8)|(level==1&&getValidArgs(center)?16)},
-		'bottomTree': jCollam.getJSONArgumentTree(center,level-1)
+		'topTree': t?[]:jCollam.getJSONItemConclusionTree(center,level-1),
+		'root': cb,//+{(level==1&&getValidconclusionConns(center)?8)|(level==1&&getValidArgs(center)?16)},
+		'bottomTree': b?[]:jCollam.getJSONArgumentTree(center,level-1)
 	};
 }
 

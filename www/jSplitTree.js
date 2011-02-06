@@ -1,3 +1,5 @@
+//TODO: minimal width of item due to arrows
+
 jSplitTree = new Object();
 
 jSplitTree.lineMargin=20;
@@ -40,6 +42,8 @@ jSplitTree.genItems= function(tree,backwards,parentOffset,isMeta,parentId)
 	for(i in tree)
 	{
 		var props=tree[i];
+		if (props.children==null) props.children=[];
+		if (props.metaChildren==null) props.metaChildren=[];
 		var id=this.getIdPostfix(backwards);
 		var box=this.makeItemBox(props.box);
 		box.id='b'+id;
