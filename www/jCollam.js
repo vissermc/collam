@@ -1,11 +1,14 @@
 jCollam = new Object();
 
-jCollam.draw = function(target, roots)
+jCollam.useGradients = true;
+jCollam.showProbabilities = true;
+
+jCollam.draw = function(target, rootsOrText)
 {
-	if (typeof(roots)=='string')
-		roots=jCollam.parse(roots);
-	for(var i in roots)
-		jSplitTree.create(target,jCollam.getJSONTriple(roots[i],-1));
+	if (typeof(rootsOrText)=='string')
+		rootsOrText=jCollam.parse(rootsOrText);
+	for(var i in rootsOrText)
+		jSplitTree.create(target,jCollam.getJSONTriple(rootsOrText[i],-1));
 }
 
 jCollam.parse = function(text)
@@ -41,7 +44,7 @@ jCollam.clearTarget = function(target) { jCollam.shownArguments={}; jCollam.show
 
 jCollam.getCSSColor = function(v,rgb)
 {
-	var l=Math.floor(v*85);
+	var l=jCollam.useGradients?Math.floor(v*85):85;
 	l=[170-l,170+l];
 	for(var i in l) l[i]=l[i].toString(16);
 	return '#'+l[rgb[0]]+l[rgb[1]]+l[rgb[2]];
@@ -115,7 +118,9 @@ jCollam.Item.prototype.getColor=function()
 	return jCollam.getCSSColor(cp,cp<0?[1,0,0]:[0,1,0]);
 }
 jCollam.Item.prototype.getMetaTexts=function(prob)
-{	
+{
+	if (!jCollam.showProbabilities)
+		return [];
 	var a=[];//if you want to show internal id's, use [this.id];
 	if (prob!=1.0)
 		a.push('P&nbsp;'+jCollam.probabilityToString(prob));
@@ -199,11 +204,13 @@ jCollam.Proposition.prototype.getColor=function()
 jCollam.Proposition.prototype.getMetaTexts=function(prob)
 {	
 	var a=jCollam.Item.prototype.getMetaTexts.call(this,prob);
+	if (!jCollam.showProbabilities)
+		return a;
 	if (this.probability!=1.0)
 	{
 		for (var t in this.argumentConns) // this strange loop just to check whether array is nonempty
 		{
-			a[1]+='&nbsp;('+jCollam.probabilityToString(this.probability)+')';
+			a[1]+='&nbsp;('+jCollam.probabilityToString(this.probability)+')'; // append to external probability
 			break;
 		}
 	}
