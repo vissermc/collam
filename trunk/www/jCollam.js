@@ -2,6 +2,8 @@ jCollam = new Object();
 
 jCollam.useGradients = true;
 jCollam.showProbabilities = true;
+jCollam.showInternalIds = false;
+jCollam.showExternalIds = false;
 
 jCollam.draw = function(target, rootsOrText)
 {
@@ -62,7 +64,7 @@ jCollam.getCSSColor = function(v,rgb)
 
 jCollam.Connection = function(argument,conclusion,probability)
 {
-	this.id=getNewId();
+	this._id=getNewId();
 	this.argumentConns={};
 	this.argument=argument;
 	this.conclusion=conclusion;
@@ -71,7 +73,7 @@ jCollam.Connection = function(argument,conclusion,probability)
 jCollam.Connection.prototype.isArrowTarget=1;
 /*jCollam.Connection.prototype.getconclusionConns=function()
 {
-	return {this.conclusion.id};
+	return {this.conclusion._id};
 }*/
 jCollam.Connection.prototype.calcProbability=function()
 {
@@ -95,7 +97,7 @@ jCollam.Connection.prototype.getText=function()
 
 jCollam.Item = function()
 {
-	this.id=getNewId();
+	this._id=getNewId();
 	this.argumentConns={};
 	this.conclusionConns={};
 }
@@ -121,7 +123,11 @@ jCollam.Item.prototype.getMetaTexts=function(prob)
 {
 	if (!jCollam.showProbabilities)
 		return [];
-	var a=[];//if you want to show internal id's, use [this.id];
+	var a=[];//if you want to show internal id's, use [this._id];
+	if (jCollam.showInternalIds)
+		a.push(this._id.replace(/^0*/g,''));
+	else if (jCollam.showExternalIds && this.id!=null)
+		a.push(this.id);
 	if (prob!=1.0)
 		a.push('P&nbsp;'+jCollam.probabilityToString(prob));
 	return a;
@@ -195,12 +201,6 @@ jCollam.Proposition.prototype.getColor=function()
 	return jCollam.getCSSColor(cp,[0,1,1]);
 }
 
-/*
-	$.getMetaTexts=?<prop><[jCollam.Item]this>
-	(	.p=getPropData(this).probability;
-		(jCollam.Item.prototype.getMetaTexts(prop))+(p!=1.0 ? '&nbsp;('+p+')')
-	);
-*/
 jCollam.Proposition.prototype.getMetaTexts=function(prob)
 {	
 	var a=jCollam.Item.prototype.getMetaTexts.call(this,prob);
@@ -220,8 +220,8 @@ jCollam.Proposition.prototype.getMetaTexts=function(prob)
 jCollam.connectItems = function(argument,conclusion, strength)
 {
 	var c=new jCollam.Connection(argument,conclusion,strength);
-	argument.conclusionConns[conclusion.id]=c;
-	conclusion.argumentConns[argument.id]=c;
+	argument.conclusionConns[conclusion._id]=c;
+	conclusion.argumentConns[argument._id]=c;
 }
 
 jCollam.setRepeatText= function(box) { box.text= 'See above: ('+box.text + ')'; }
@@ -246,18 +246,18 @@ jCollam.getJSONItemConclusionTree = function(item,level)
 					//'urlTail': urlTailForConnection(item,$.key), 
 					'text': cc.getText()
 				};
-			if( jCollam.shownConclusions[c.id])
+			if( jCollam.shownConclusions[c._id])
 			{	
 				jCollam.setRepeatText(ps.box);
 			}
 			else
 			{	
-				jCollam.shownConclusions[c.id]=true;
-				if( !jCollam.shownArguments[c.id])
+				jCollam.shownConclusions[c._id]=true;
+				if( !jCollam.shownArguments[c._id])
 					ps.metaChildren=jCollam.getJSONArgumentTree(cc,level-1);
 				ps.children=jCollam.getJSONItemConclusionTree(c,level-1);
 			}
-			r.push( [ c.id, ps ] );
+			r.push( [ c._id, ps ] );
 		}
 	}
 	r.sort();
@@ -287,18 +287,18 @@ jCollam.getJSONArgumentTree = function(object,level)
 					//'urlTail': urlTailForConnection(item,$.key), 
 					'text': cc.getText()
 				};
-			if( jCollam.shownArguments[a.id])
+			if( jCollam.shownArguments[a._id])
 			{	
 				jCollam.setRepeatText(ps.box);
 			}
 			else
 			{	
-				jCollam.shownArguments[a.id]=true;
-				if( !jCollam.shownConclusions[a.id])
+				jCollam.shownArguments[a._id]=true;
+				if( !jCollam.shownConclusions[a._id])
 					ps.metaChildren=jCollam.getJSONArgumentTree(cc,level-1);
 				ps.children=jCollam.getJSONArgumentTree(a,level-1);
 			}
-			r.push( [ a.id, ps ] );
+			r.push( [ a._id, ps ] );
 		}
 	}
 	r.sort();
@@ -312,10 +312,10 @@ jCollam.getJSONArgumentTree = function(object,level)
 jCollam.getJSONTriple = function(center,level)
 {
 	var cb=center.getItemJSONProps().box;
-	var t=jCollam.shownConclusions[center.id];
-	var b=jCollam.shownArguments[center.id];
-	jCollam.shownConclusions[center.id]=true;
-	jCollam.shownArguments[center.id]=true;
+	var t=jCollam.shownConclusions[center._id];
+	var b=jCollam.shownArguments[center._id];
+	jCollam.shownConclusions[center._id]=true;
+	jCollam.shownArguments[center._id]=true;
 	if (t||b) 
 		jCollam.setRepeatText(cb);
 	return {
@@ -340,14 +340,16 @@ jCollam.processStruct = function(struct, parent,grandParent)
 		) 
 	);
 	if (id!=null)
+	{	item.id=id;
 		jCollam.items[id]=item;
+	}
 	if (elems[1]=='*')
 		jCollam.rootItems.push(item);
 	if (elems[5]!='')
 		item.probability=parseFloat(elems[5].substr(1));
 	var strength=(elems[3]=='-'?-1.0:1.0) * (elems[4]=='' ? 1.0: parseFloat(elems[4]));
 	if (elems[2]=='<')
-	{	jCollam.connectItems(item,parent.conclusionConns[grandParent.id],strength);
+	{	jCollam.connectItems(item,parent.conclusionConns[grandParent._id],strength);
 	}
 	else
 	{
