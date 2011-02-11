@@ -6,7 +6,6 @@ div.ViSpi_box, div.ViSpi_arrowText
 	background-color:#88ff88;
 	padding:4px;
 	margin:5px 0px 5px 0px;
-	cursor: pointer;
 	-moz-border-radius: 5px;
 	border-radius: 5px;	
 }
@@ -22,7 +21,6 @@ div.ViSpi_line,div.ViSpi_shortlineHor,div.ViSpi_shortlineVert,div.ViSpi_hlineUp,
 	margin:0px;padding:0px;
 	position:absolute;
 	width:5px;height:5px;
-	cursor: pointer;
 }
 div.ViSpi_hlineUp
 {
@@ -62,7 +60,6 @@ div.ViSpi_arrow0, div.ViSpi_arrow1, div.ViSpi_arrow2,div.ViSpi_arrow3
 	font-weight:bold;
 	font-size:25px;
 	overflow:hidden;
-	cursor: pointer;
 }
 div.ViSpi_arrow1,div.ViSpi_arrow3
 {
