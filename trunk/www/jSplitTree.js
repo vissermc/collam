@@ -19,8 +19,7 @@ jSplitTree.makeItemBox= function(props)
 		e.innerHTML=props.text;
 		b.appendChild(e);
 	}
-	b.addEventListener('click',function(event) { props.onclick(b);/*itemClick(props,b);*/ event.stopPropagation();},false);
-//	b.onclick=function() {  return false;}
+	jSplitTree.setClick(b,props);
 
 	return b;
 }
@@ -35,6 +34,14 @@ jSplitTree.conns;//x,w,s,d,isMeta,color
 jSplitTree.getIdPostfix= function(backwards)
 {	return ""+this.instanceCounter+"_"+backwards+"_"+this.elemCounter;
 }
+jSplitTree.setClick=function(target,object)
+{
+	if (object.onclick!=null)
+	{	target.addEventListener('click',function(event) { object.onclick(target); event.stopPropagation(); },false);
+		target.style.cursor="pointer";
+	}
+}
+
 jSplitTree.genItems= function(tree,backwards,parentOffset,isMeta,parentId)
 {
 	var i;
@@ -48,7 +55,6 @@ jSplitTree.genItems= function(tree,backwards,parentOffset,isMeta,parentId)
 		var box=this.makeItemBox(props.box);
 		box.id='b'+id;
 		box.style.minWidth=this.px(this.lineMargin*props.children.length);
-		var lineFunc=function(arrow,target) { return function(event) { arrow.onclick(target); event.stopPropagation(); } };
 		this.elemCounter++;
 		var arrowText=null;
 		var offset=boxOffset;
@@ -60,13 +66,13 @@ jSplitTree.genItems= function(tree,backwards,parentOffset,isMeta,parentId)
 		if (props.arrow.text!=null)
 		{	arrowText=document.createElement("div");
 			arrowText.className='ViSpi_arrowText';
-			arrowText.addEventListener('click',lineFunc(props.arrow,arrowText),false);
+			jSplitTree.setClick(arrowText,props.arrow);
 			arrowText.style.marginTop=this.px(!backwards&&(props.arrow.mode&1)&&i==0?10:0);
 			arrowText.style.marginLeft=this.px(connOffset-8);
 			arrowText.innerHTML=props.arrow.text;
 			arrowText.style.backgroundColor=props.arrow.color;
 		}
-		this.conns.push({'dx':connOffset-offset,'s':parentId,'w':w,'d':box.id,'isMeta':isMeta,'props':props.arrow, 'onclick': lineFunc });
+		this.conns.push({'dx':connOffset-offset,'s':parentId,'w':w,'d':box.id,'isMeta':isMeta,'props':props.arrow });
 		if (backwards)
 		{	this.genItems(props.children,backwards,offset,false,box.id);
 			this.container.appendChild(box);
@@ -94,7 +100,6 @@ jSplitTree.drawConns = function(container)
 		var s=document.getElementById(co.s);
 		var d=document.getElementById(co.d);
 		var x=co.dx+d.offsetLeft;
-		var onclick;
 		var backwards=s!=null && s.offsetTop>d.offsetTop;
 		var isMeta=co.isMeta;
 		var yd=d.offsetTop+Math.floor((d.offsetHeight-this.lineWidth)/2);
@@ -104,8 +109,7 @@ jSplitTree.drawConns = function(container)
 		{
 			var line=document.createElement("div");
 			line.className='ViSpi_line';
-			onclick = co.onclick(co,line);
-			line.addEventListener('click',onclick,false);
+			jSplitTree.setClick(line,co);
 			line.style.left=this.px(x);
 			line.style.width=this.px(this.lineWidth);//this.px(co.w);
 			var lineDown=backwards?this.lineWidth:0;
@@ -117,7 +121,7 @@ jSplitTree.drawConns = function(container)
 		{
 			var line=document.createElement("div");
 			line.className=backwards?'ViSpi_hlineUp':'ViSpi_hlineDown';
-			line.addEventListener('click',onclick,false);
+			jSplitTree.setClick(line,co);
 			line.style.left=this.px(x);
 			line.style.width=this.px(co.w-this.lineWidth);//this.px(co.w);
 			line.style.top=this.px(yd-(backwards?0:this.lineWidth*2));
@@ -143,7 +147,7 @@ jSplitTree.drawConns = function(container)
 			ar.className='ViSpi_arrow'+(co.props.mode==1?(backwards?2:0):1);
 			ar.style.backgroundColor=co.props.color;
 			ar.innerHTML='<img src="arrow.png"></img>';
-			ar.addEventListener('click',onclick,false);
+			jSplitTree.setClick(ar,co);
 			ar.style.left=this.px(x+(co.props.mode==1?-this.arrowSize:co.w-this.arrowSize-2));
 			ar.style.top=this.px(co.props.mode==1?ys-(backwards?this.arrowSize:0):yd-this.arrowSize);
 			container.appendChild(ar);
