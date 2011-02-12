@@ -5,6 +5,11 @@ jCollam.showProbabilities = true;
 jCollam.showInternalIds = false;
 jCollam.showExternalIds = false;
 
+jCollam.onClickItem = null;
+jCollam.onClickConnection = null;
+
+jCollam.words=['supports','challenges'];
+
 jCollam.draw = function(target, rootsOrText)
 {
 	if (typeof(rootsOrText)=='string')
@@ -92,7 +97,7 @@ jCollam.Connection.prototype.getColor=function()
 jCollam.Connection.prototype.getText=function()
 {
 	var p=this.probability;
-	return this.conclusion.isArrowTarget?(p>=0?'supports'+(p==1.0?'':' '+p):'challenges'+(p==-1.0?'':' '+-p)):(p==1.0?null :''+p);
+	return this.conclusion.isArrowTarget?(p>=0?jCollam.words[0]+(p==1.0?'':' '+p):jCollam.words[1]+(p==-1.0?'':' '+-p)):(p==1.0?null :''+p);
 }
 
 jCollam.Item = function()
@@ -147,7 +152,12 @@ jCollam.formatTextAndMetaTexts = function(text,metaTexts)
 }
 jCollam.Item.prototype.getItemJSONProps=function()
 {
-	return { 'box': { 'text':jCollam.formatTextAndMetaTexts(this.getText(),this.getMetaTexts(this.calcProbability())),'color':this.getColor() } };
+	return { 'box': { 
+				'text':jCollam.formatTextAndMetaTexts(this.getText(),this.getMetaTexts(this.calcProbability())),
+				'color':this.getColor(), 
+				'onClick': jCollam.onClickItem 
+			}
+		};
 }
 
 jCollam.Or = function()
@@ -224,7 +234,7 @@ jCollam.connectItems = function(argument,conclusion, strength)
 	conclusion.argumentConns[argument._id]=c;
 }
 
-jCollam.setRepeatText= function(box) { box.text= 'See above: ('+box.text + ')'; }
+jCollam.setRepeatText= function(box) { box.text= box.text + ' (See above)'; }
 
 jCollam.getJSONItemConclusionTree = function(item,level)
 {
@@ -239,12 +249,14 @@ jCollam.getJSONItemConclusionTree = function(item,level)
 		if (c.prototype!=jCollam.Connection.prototype)
 		{
 			var ps=c.getItemJSONProps();
+			ps.onClick = jCollam.onClickItem;
 			ps.arrow=
 				{
 					'mode': (c.isArrowTarget*2)/*|(@$.key.argumentConns>1?4)|(level==1&&$.key.conclusionConns?8)*/,
 					'color': cc.getColor(),
 					//'urlTail': urlTailForConnection(item,$.key), 
-					'text': cc.getText()
+					'text': cc.getText(),
+					'onClick' : jCollam.onClickConnection
 				};
 			if( jCollam.shownConclusions[c._id])
 			{	
@@ -285,7 +297,8 @@ jCollam.getJSONArgumentTree = function(object,level)
 					'mode': (object.isArrowTarget?1:0)/*|(@$.key.argumentConns>1?4)|(level==1&&$.key.conclusionConns?8)*/,
 					'color': cc.getColor(),
 					//'urlTail': urlTailForConnection(item,$.key), 
-					'text': cc.getText()
+					'text': cc.getText(),
+					'onClick' : jCollam.onClickConnection
 				};
 			if( jCollam.shownArguments[a._id])
 			{	

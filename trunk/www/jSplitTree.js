@@ -36,8 +36,8 @@ jSplitTree.getIdPostfix= function(backwards)
 }
 jSplitTree.setClick=function(target,object)
 {
-	if (object.onclick!=null)
-	{	target.addEventListener('click',function(event) { object.onclick(target); event.stopPropagation(); },false);
+	if (object.onClick!=null)
+	{	target.addEventListener('click',function(event) { object.onClick(target); event.stopPropagation(); },false);
 		target.style.cursor="pointer";
 	}
 }
