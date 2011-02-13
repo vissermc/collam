@@ -44,19 +44,34 @@ Bruno's boss does not have to worry\n\
 ";
 	textObj=document.getElementById('text');
 	textObj.value=str.replace(/\t/g,"  ");
-	//alert(document.getElementById('text').innerHTML.replace(/&lt;/g,'<').replace(/&gt;/g,'>'));
 	update();
 }
 function update()
 {
 	var o=document.getElementById('test');
 	jCollam.clearTarget(o);
-	//jCollam.draw(o, textObj.value);
-	anotherTest(o);
+	jCollam.draw(o, textObj.value);
+	//anotherTest(o);
 } 
 </script>
 </head>
 <body onload="init();">
+<h1>jCollam - Online Argument Maps</h1>
+<h2>Manual</h2>
+With the jCollam javascript library, you can visualize Argument maps using the Collam principles.<br>
+Usage:<br>
+Call <code>jCollam.draw(target_div, text);</code><br>
+Where 'text' is one or more tabbed/doubly spaced trees, as shown in the sandbox below.
+Tokens:
+<ul>
+<li>'*' indicates the proposition is a root to be visualized.</li>
+<li>'+' (optional) indicates supporting argumentation.</li>
+<li>'-' indicates challenging argumentation.</li>
+<li>'<+' or '<-' indicates a meta-reason.</li>
+<li>A number between zero and one, immediately after the '+' or '-' indicates the probability.</li>
+<li>A number between '[' and ']' indicates an internal probability of a proposition.</li>
+</ul>
+<h2>Sandbox</h2>
 <form action="#" onsubmit="return false;">
 <textarea id="text" name="text" cols="120" rows="15"></textarea><br>
 <input type="submit" name="upd" value="Update" onclick="update();return false;"></input>
