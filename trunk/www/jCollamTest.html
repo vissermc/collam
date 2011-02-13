@@ -57,6 +57,13 @@ function update()
 </head>
 <body onload="init();">
 <h1>jCollam - Online Argument Maps</h1>
+<h2>Sandbox</h2>
+Press the 'update' button to update the visualized tree.<br><br>
+<form action="#" onsubmit="return false;">
+<textarea id="text" name="text" cols="120" rows="15"></textarea><br>
+<input type="submit" name="upd" value="Update" onclick="update();return false;"></input>
+</form>
+<div id="test"></div><div style="clear:both;"></div>
 <h2>Manual</h2>
 With the jCollam javascript library, you can visualize Argument maps using the Collam principles.<br>
 Usage:<br>
@@ -71,11 +78,5 @@ Tokens:
 <li>A number between zero and one, immediately after the '+' or '-' indicates the probability.</li>
 <li>A number between '[' and ']' indicates an internal probability of a proposition.</li>
 </ul>
-<h2>Sandbox</h2>
-<form action="#" onsubmit="return false;">
-<textarea id="text" name="text" cols="120" rows="15"></textarea><br>
-<input type="submit" name="upd" value="Update" onclick="update();return false;"></input>
-</form>
-<div id="test"></div>
 </body>
 </html>
