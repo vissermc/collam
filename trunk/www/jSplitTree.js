@@ -42,6 +42,12 @@ jSplitTree.setClick=function(target,object)
 	}
 }
 
+jSplitTree.appendBr= function(target)
+			{
+				var e=document.createElement("br");
+				target.appendChild(e);
+			}
+
 jSplitTree.genItems= function(tree,backwards,parentOffset,isMeta,parentId)
 {
 	var i;
@@ -76,15 +82,21 @@ jSplitTree.genItems= function(tree,backwards,parentOffset,isMeta,parentId)
 		if (backwards)
 		{	this.genItems(props.children,backwards,offset,false,box.id);
 			this.container.appendChild(box);
+			jSplitTree.appendBr(this.container);
 			this.genItems(props.metaChildren,false,connOffset,true,box.id);
 			if (arrowText!=null)
-				this.container.appendChild(arrowText);	
+			{	this.container.appendChild(arrowText);	
+				jSplitTree.appendBr(this.container);
+			}
 		}
 		else
 		{	
 			if (arrowText!=null)
-				this.container.appendChild(arrowText);	
+			{	this.container.appendChild(arrowText);	
+				jSplitTree.appendBr(this.container);
+			}
 			this.container.appendChild(box);
+			jSplitTree.appendBr(this.container);
 			this.genItems(props.children,backwards,offset,false,box.id);
 			this.genItems(props.metaChildren,false,connOffset,true,box.id);
 		}
@@ -173,6 +185,7 @@ jSplitTree.create = function(target,splitTree) // splitTree == { 'topTree': , 'r
 		cbox=this.makeItemBox(splitTree.root);
 		cbox.id=cid;
 		this.container.appendChild(cbox);
+		jSplitTree.appendBr(this.container);
 	}
 	this.elemCounter=0;
 	this.genItems(splitTree.bottomTree,false,0,false,cid);

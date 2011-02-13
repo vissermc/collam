@@ -1,13 +1,12 @@
 div.ViSpi_box, div.ViSpi_arrowText
 {
-	float:left;
-	clear:left;
 	text-align:center;
 	background-color:#88ff88;
 	padding:4px;
 	margin:5px 0px 5px 0px;
 	-moz-border-radius: 5px;
 	border-radius: 5px;	
+	display:inline-block;
 }
 div.ViSpi_arrowText
 {
