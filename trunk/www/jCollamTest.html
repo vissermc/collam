@@ -6,23 +6,22 @@
 <script src="jSplitTree.js"></script>
 <script>
 
-function test(target)
+function anotherTest(target)
 {
-	var p1=new Proposition('final conclusion');
-	var p2=new Proposition('center conclusion');
-	var p3=new Proposition('arg 1');
-	var p4=new Proposition('arg 2',0.2);
-	var p5=new Proposition('arg 3');
-	var p6=new Or();
-	var p7=new Proposition('arg 4');
-	var p8=new Proposition('arg 5');
-	connectItems(p2,p1,1);
-	connectItems(p3,p6,1);
-	connectItems(p5,p6,1);
-	connectItems(p6,p2,1);
-	connectItems(p4,p2,-1);
-	//alert(p5.conclusionConns[p6.id]);
-	//connectItems(p7,p5.conclusionConns[p6.id],-1);
+	var p1=new jCollam.Proposition('final conclusion');
+	var p2=new jCollam.Proposition('center conclusion');
+	var p3=new jCollam.Proposition('arg 1');
+	var p4=new jCollam.Proposition('arg 2',0.2);
+	var p5=new jCollam.Proposition('arg 3');
+	var p6=new jCollam.Or();
+	var p7=new jCollam.Proposition('arg 4');
+	var p8=new jCollam.Proposition('arg 5');
+	jCollam.connectItems(p2,p1,1);
+	jCollam.connectItems(p3,p6,1);
+	jCollam.connectItems(p5,p6,1);
+	jCollam.connectItems(p6,p2,1);
+	jCollam.connectItems(p4,p2,-1);
+	jCollam.connectItems(p7,p5.conclusionConns[p6._id],-1);
 	//connectItems(p8,p7.conclusionConns[p5.conclusionConns[p6.id].id],1);
 	jCollam.draw(target, [p2] );
 }
@@ -52,7 +51,8 @@ function update()
 {
 	var o=document.getElementById('test');
 	jCollam.clearTarget(o);
-	jCollam.draw(o, textObj.value);	
+	//jCollam.draw(o, textObj.value);
+	anotherTest(o);
 } 
 </script>
 </head>
