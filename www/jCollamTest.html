@@ -60,12 +60,12 @@ function update()
 <h2>Sandbox</h2>
 Press the 'update' button to update the visualized tree.<br><br>
 <form action="#" onsubmit="return false;">
-<textarea id="text" name="text" cols="120" rows="15"></textarea><br>
+<b>Input:</b><br><textarea id="text" name="text" cols="120" rows="15"></textarea><br>
 <input type="submit" name="upd" value="Update" onclick="update();return false;"></input>
 </form>
-<div id="test"></div>
+<b>Output:</b><br><div id="test"></div>
 <h2>Manual</h2>
-With the jCollam javascript library, you can visualize Argument maps using the Collam principles.<br>
+With the jCollam javascript library, you can visualize Argument Maps using the Collam principles.<br>
 Usage:<br>
 Call <code>jCollam.draw(target_div, text);</code><br>
 Where 'text' is one or more tabbed/doubly spaced trees, as shown in the sandbox below.
@@ -78,5 +78,25 @@ Tokens:
 <li>A number between zero and one, immediately after the '+' or '-' indicates the probability.</li>
 <li>A number between '[' and ']' indicates an internal probability of a proposition.</li>
 </ul>
+There is also a programmers interface. Shown below is an example Argument Map:<br>
+<pre>
+{
+	var p1=new jCollam.Proposition('final conclusion');
+	var p2=new jCollam.Proposition('center conclusion');
+	var p3=new jCollam.Proposition('arg 1');
+	var p4=new jCollam.Proposition('arg 2',0.2);
+	var p5=new jCollam.Proposition('arg 3');
+	var p6=new jCollam.Or();
+	var p7=new jCollam.Proposition('arg 4');
+	var p8=new jCollam.Proposition('arg 5');
+	jCollam.connectItems(p2,p1,1);
+	jCollam.connectItems(p3,p6,1);
+	jCollam.connectItems(p5,p6,1);
+	jCollam.connectItems(p6,p2,1);
+	jCollam.connectItems(p4,p2,-1);
+	jCollam.connectItems(p7,p5.conclusionConns[p6._id],-1);
+	jCollam.draw(target, [p2] );
+}
+</pre>
 </body>
 </html>
