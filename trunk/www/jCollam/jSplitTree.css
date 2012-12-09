@@ -23,13 +23,13 @@ div.ViSpi_line,div.ViSpi_shortlineHor,div.ViSpi_shortlineVert,div.ViSpi_hlineUp,
 }
 div.ViSpi_hlineUp
 {
-	-moz-border-radius: 10px 0px 10px 10px;
-	border-radius: 10px 0px 10px 10px;	
+	-moz-border-radius: 7px 0px 0px 0px;	
+	border-radius: 7px 0px 0px 0px;	
 }
 div.ViSpi_hlineDown
 {
-	-moz-border-radius: 10px 10px 0px 10px;
-	border-radius: 10px 10px 0px 10px;	
+	-moz-border-radius: 0px 0px 0px 7px;
+	border-radius: 0px 0px 0px 7px;	
 }
 
 div.ViSpi_shortlineHor
