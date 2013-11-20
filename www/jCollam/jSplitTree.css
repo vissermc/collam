@@ -55,26 +55,15 @@ div.ViSpi_arrow0, div.ViSpi_arrow1, div.ViSpi_arrow2,div.ViSpi_arrow3
 	z-index:2;
 	margin:0px;
 	position:absolute;
-	background-color:#88ff88;
-	font-weight:bold;
-	font-size:25px;
-	overflow:hidden;
+	width:0px;
+	height:0px;
+	border: 5px solid rgba(0,0,0,0.0);
 }
 div.ViSpi_arrow1,div.ViSpi_arrow3
 {
-	width:8px;height:17px;
 }
 div.ViSpi_arrow0, div.ViSpi_arrow2
 {
-	width:17px;height:8px;
-}
-div.ViSpi_arrow1 img
-{
-	position:relative;right:9px;
-}
-div.ViSpi_arrow2 img
-{
-	position:relative;bottom:9px;
 }
 
 div.ViSpi_itemText

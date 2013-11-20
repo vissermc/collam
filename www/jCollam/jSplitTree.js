@@ -5,28 +5,15 @@ jSplitTree = new Object();
 jSplitTree.lineMargin=20;
 jSplitTree.lineWidth=5;
 jSplitTree.lineOffset=jSplitTree.lineMargin/2;
-jSplitTree.arrowSize=6;
+jSplitTree.arrowSize=9;
 
 jSplitTree.makeItemBox= function(props)
 {
-	var line, e;
-	var b=document.createElement("div");
-	b.className='ViSpi_box';
-	b.style.backgroundColor=props.color;
-	{
-		e=document.createElement("div");
-		e.className='ViSpi_itemText';
-		e.innerHTML=props.text;
-		b.appendChild(e);
-	}
-	jSplitTree.setClick(b,props);
-
-	return b;
+	return $("<div></div>").addClass('ViSpi_box').css('background-color',props.color)
+		.append($("<div></div>").addClass('ViSpi_itemText').html(props.text))
+		.click(function() { props.onClick(this); } );
 }
 
-jSplitTree.px= function(v)
-{	return ""+Math.floor(v)+"px";
-}
 jSplitTree.instanceCounter=0;
 jSplitTree.elemCounter;
 jSplitTree.container;
@@ -42,12 +29,6 @@ jSplitTree.setClick=function(target,object)
 	}
 }
 
-jSplitTree.appendBr= function(target)
-			{
-				var e=document.createElement("br");
-				target.appendChild(e);
-			}
-
 jSplitTree.genItems= function(tree,backwards,parentOffset,isMeta,parentId)
 {
 	var i;
@@ -59,8 +40,8 @@ jSplitTree.genItems= function(tree,backwards,parentOffset,isMeta,parentId)
 		if (props.metaChildren==null) props.metaChildren=[];
 		var id=this.getIdPostfix(backwards);
 		var box=this.makeItemBox(props.box);
-		box.id='b'+id;
-		box.style.minWidth=this.px(this.lineMargin*props.children.length);
+		box.attr('id','b'+id);
+		box.css('min-width', this.lineMargin*props.children.length);
 		this.elemCounter++;
 		var arrowText=null;
 		var offset=boxOffset;
@@ -68,37 +49,33 @@ jSplitTree.genItems= function(tree,backwards,parentOffset,isMeta,parentId)
 		var w=boxOffset-connOffset;
 		var minW=this.lineMargin*props.metaChildren.length+10;
 		if (w<minW) { offset+=minW-w; w=minW; }
-		box.style.marginLeft=this.px(offset);
-		if (props.arrow.text!=null)
-		{	arrowText=document.createElement("div");
-			arrowText.className='ViSpi_arrowText';
-			jSplitTree.setClick(arrowText,props.arrow);
-			arrowText.style.marginTop=this.px(!backwards&&(props.arrow.mode&1)&&i==0?10:0);
-			arrowText.style.marginLeft=this.px(connOffset-8);
-			arrowText.innerHTML=props.arrow.text;
-			arrowText.style.backgroundColor=props.arrow.color;
+		box.css('margin-left',offset);
+		if (props.arrow.text!=null) {
+			arrowText=$("<div></div>").addClass('ViSpi_arrowText');
+			arrowText.click(function() { props.arrow.onClick(this); } );
+			arrowText.css({
+				'margin-top': !backwards&&(props.arrow.mode&1)&&i==0?10:0, 
+				'margin-left': connOffset-8,
+				'background-color': props.arrow.color
+			}).html(props.arrow.text);
 		}
-		this.conns.push({'dx':connOffset-offset,'s':parentId,'w':w,'d':box.id,'isMeta':isMeta,'props':props.arrow });
-		if (backwards)
-		{	this.genItems(props.children,backwards,offset,false,box.id);
-			this.container.appendChild(box);
-			jSplitTree.appendBr(this.container);
-			this.genItems(props.metaChildren,false,connOffset,true,box.id);
-			if (arrowText!=null)
-			{	this.container.appendChild(arrowText);	
-				jSplitTree.appendBr(this.container);
+		this.conns.push({'s':parentId,'w':w,'d':box.attr('id'),'isMeta':isMeta,'props':props.arrow });
+		if (backwards) {
+			this.genItems(props.children,backwards,offset,false,box.attr('id'));
+			this.container.append(box).append($('<br>'));
+			this.genItems(props.metaChildren,false,connOffset,true,box.attr('id'));
+			if (arrowText!=null) {
+				this.container.append(arrowText).append($('<br>'));
 			}
 		}
 		else
 		{	
-			if (arrowText!=null)
-			{	this.container.appendChild(arrowText);	
-				jSplitTree.appendBr(this.container);
+			if (arrowText!=null) {
+				this.container.append(arrowText).append($('<br>'));
 			}
-			this.container.appendChild(box);
-			jSplitTree.appendBr(this.container);
-			this.genItems(props.children,backwards,offset,false,box.id);
-			this.genItems(props.metaChildren,false,connOffset,true,box.id);
+			this.container.append(box).append($('<br>'))
+			this.genItems(props.children,backwards,offset,false,box.attr('id'));
+			this.genItems(props.metaChildren,false,connOffset,true,box.attr('id'));
 		}
 		//document.write();
 	}
@@ -106,90 +83,44 @@ jSplitTree.genItems= function(tree,backwards,parentOffset,isMeta,parentId)
 
 jSplitTree.drawConns = function(container)
 {
-	for(c in this.conns)
-	{
+	var lf=new jLineFactory($(container));
+	for(c in this.conns) {
 		var co = this.conns[c];
-		var s=document.getElementById(co.s);
-		var d=document.getElementById(co.d);
-		var x=co.dx+d.offsetLeft;
-		var backwards=s!=null && s.offsetTop>d.offsetTop;
-		var isMeta=co.isMeta;
-		var yd=d.offsetTop+Math.floor((d.offsetHeight-this.lineWidth)/2);
-		var ys=s==null?yd:s.offsetTop +(isMeta?Math.floor((s.offsetHeight+this.lineWidth)/2):(backwards?0:s.offsetHeight));
-		var y= backwards ? yd : ys;
-		var h=(backwards ? ys : yd ) - y;
-		{
-			var line=document.createElement("div");
-			line.className='ViSpi_line';
-			jSplitTree.setClick(line,co);
-			line.style.left=this.px(x);
-			line.style.width=this.px(this.lineWidth);//this.px(co.w);
-			var lineDown=backwards?this.lineWidth:0;
-			line.style.top=this.px(y+lineDown);
-			line.style.height=this.px(h-lineDown);
-			line.style.backgroundColor=co.props.color;//"#334455";
-			container.appendChild(line);
-		}
-		{
-			var line=document.createElement("div");
-			line.className=backwards?'ViSpi_hlineUp':'ViSpi_hlineDown';
-			jSplitTree.setClick(line,co);
-			line.style.left=this.px(x);
-			line.style.width=this.px(co.w-this.lineWidth);//this.px(co.w);
-			line.style.top=this.px(yd-(backwards?0:this.lineWidth*2));
-			line.style.height=this.px(this.lineWidth*2);
-			line.style.borderLeftWidth=this.px(this.lineWidth);
-			line.style.borderLeftStyle="solid";
-			if (backwards)
-			{
-				line.style.borderTopWidth=this.px(this.lineWidth);
-				line.style.borderTopStyle="solid";
-			}
-			else
-			{
-				line.style.borderBottomWidth=this.px(this.lineWidth);
-				line.style.borderBottomStyle="solid";
-			}
-			line.style.borderColor=co.props.color;
-			container.appendChild(line);
-		}
-		if(co.props.mode)
-		{
-			var ar=document.createElement("div");
-			ar.className='ViSpi_arrow'+(co.props.mode==1?(backwards?2:0):1);
-			ar.style.backgroundColor=co.props.color;
-			ar.innerHTML='<img src="arrow.png"></img>';
-			jSplitTree.setClick(ar,co);
-			ar.style.left=this.px(x+(co.props.mode==1?-this.arrowSize:co.w-this.arrowSize-2));
-			ar.style.top=this.px(co.props.mode==1?ys-(backwards?this.arrowSize:0):yd-this.arrowSize);
-			container.appendChild(ar);
-		}
+		var s = $('#'+co.s);
+		var d = $('#'+co.d); //todo: parentId etc
+		var sOffset=s.offset(), dOffset=d.offset();
+		var h=d.height()+8;
+		var backwards=s!=null && sOffset.top>dOffset.top;
+		var hOffset = co.isMeta ? this.lineWidth/2 : (backwards ? -h/2 : h/2);
+		lf.drawCurvedLine(
+			[dOffset.left,dOffset.top+h/2],
+			[[-co.w,0],[0,sOffset.top-dOffset.top+hOffset]],
+			co.props.color,
+			this.lineWidth,
+			this.lineWidth*2,
+			backwards?this.arrowSize:0,
+			backwards?0:this.arrowSize
+		 );
 	}
 }
-jSplitTree.clearTarget = function(target)
-{
-	while (target.hasChildNodes()) {
-		target.removeChild(target.lastChild);
-	}
-}
-jSplitTree.create = function(target,splitTree) // splitTree == { 'topTree': , 'root':, 'bottomTree' } 
+
+jSplitTree.create = function(jQuertyTarget,splitTree) // splitTree == { 'topTree': , 'root':, 'bottomTree' } 
 {
 	this.instanceCounter++;
 	this.conns=[];
-	this.container=document.createElement("div");
+	this.container=$("<div></div>");
 	this.elemCounter=0;
 	var cid="center"+this.instanceCounter;
 	this.genItems(splitTree.topTree,true,0,false,cid);
 	{
 		var cbox;
 		cbox=this.makeItemBox(splitTree.root);
-		cbox.id=cid;
-		this.container.appendChild(cbox);
-		jSplitTree.appendBr(this.container);
+		cbox.attr('id',cid);
+		this.container.append(cbox).append($('<br>'));
 	}
 	this.elemCounter=0;
 	this.genItems(splitTree.bottomTree,false,0,false,cid);
 	this.elemCounter=0;
-	target.appendChild(this.container);
-	this.drawConns(target);
+	jQuertyTarget.append(this.container);
+	this.drawConns(jQuertyTarget);
 }
