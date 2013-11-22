@@ -10,12 +10,12 @@ jCollam.onClickConnection = null;
 
 jCollam.words=['supports','challenges'];
 
-jCollam.draw = function(target, rootsOrText)
+jCollam.draw = function(jQueryTarget, rootsOrText)
 {
 	if (typeof(rootsOrText)=='string')
 		rootsOrText=jCollam.parse(rootsOrText);
 	for(var i in rootsOrText)
-		jSplitTree.create(target,jCollam.getJSONTriple(rootsOrText[i],-1));
+		new jSplitTree(jQueryTarget,jCollam.getJSONTriple(rootsOrText[i],-1));
 }
 
 jCollam.parse = function(text)
@@ -47,7 +47,7 @@ jCollam.parse = function(text)
 
 jCollam.shownArguments={}; 
 jCollam.shownConclusions={};
-jCollam.clearTarget = function(target) { jCollam.shownArguments={}; jCollam.shownConclusions={}; jSplitTree.clearTarget(target); }
+jCollam.clearTarget = function(target) { jCollam.shownArguments={}; jCollam.shownConclusions={}; target.empty(); }
 
 jCollam.getCSSColor = function(v,rgb)
 {
