@@ -1,6 +1,16 @@
 //TODO: minimal width of item due to arrows
 
-jSplitTree = new Object();
+function jSplitTree(jQuertyTarget,splitTree) // splitTree == { 'topTree': , 'root':, 'bottomTree' } 
+{
+	this.conns=[];
+	this.container=$("<div></div>");
+	var center=jSplitTree.makeItemBox(splitTree.root);
+	this.genItems(splitTree.topTree,true,0,false,center);
+	this.container.append(center).append($('<br>'));
+	this.genItems(splitTree.bottomTree,false,0,false,center);
+	jQuertyTarget.append(this.container);
+	this.drawConns(jQuertyTarget);
+}
 
 jSplitTree.lineMargin=20;
 jSplitTree.lineWidth=5;
@@ -14,13 +24,7 @@ jSplitTree.makeItemBox= function(props)
 		.click(function() { props.onClick(this); } );
 }
 
-jSplitTree.instanceCounter=0;
-jSplitTree.elemCounter;
-jSplitTree.container;
 jSplitTree.conns;//x,w,s,d,isMeta,color
-jSplitTree.getIdPostfix= function(backwards)
-{	return ""+this.instanceCounter+"_"+backwards+"_"+this.elemCounter;
-}
 jSplitTree.setClick=function(target,object)
 {
 	if (object.onClick!=null)
@@ -29,25 +33,22 @@ jSplitTree.setClick=function(target,object)
 	}
 }
 
-jSplitTree.genItems= function(tree,backwards,parentOffset,isMeta,parentId)
+jSplitTree.prototype.genItems= function(tree,backwards,parentOffset,isMeta,parent)
 {
 	var i;
-	var boxOffset=parentOffset+this.lineMargin*tree.length+this.lineOffset;
+	var boxOffset=parentOffset+jSplitTree.lineMargin*tree.length+jSplitTree.lineOffset;
 	for(i in tree)
 	{
 		var props=tree[i];
 		if (props.children==null) props.children=[];
 		if (props.metaChildren==null) props.metaChildren=[];
-		var id=this.getIdPostfix(backwards);
-		var box=this.makeItemBox(props.box);
-		box.attr('id','b'+id);
-		box.css('min-width', this.lineMargin*props.children.length);
-		this.elemCounter++;
+		var box=jSplitTree.makeItemBox(props.box);
+		box.css('min-width', jSplitTree.lineMargin*props.children.length);
 		var arrowText=null;
 		var offset=boxOffset;
-		var connOffset=parentOffset+(this.lineMargin)*(backwards?i: tree.length-i-1)+this.lineOffset;
+		var connOffset=parentOffset+(jSplitTree.lineMargin)*(backwards?i: tree.length-i-1)+jSplitTree.lineOffset;
 		var w=boxOffset-connOffset;
-		var minW=this.lineMargin*props.metaChildren.length+10;
+		var minW=jSplitTree.lineMargin*props.metaChildren.length+10;
 		if (w<minW) { offset+=minW-w; w=minW; }
 		box.css('margin-left',offset);
 		if (props.arrow.text!=null) {
@@ -59,11 +60,11 @@ jSplitTree.genItems= function(tree,backwards,parentOffset,isMeta,parentId)
 				'background-color': props.arrow.color
 			}).html(props.arrow.text);
 		}
-		this.conns.push({'s':parentId,'w':w,'d':box.attr('id'),'isMeta':isMeta,'props':props.arrow });
+		this.conns.push({'s':parent,'w':w,'d':box,'isMeta':isMeta,'props':props.arrow });
 		if (backwards) {
-			this.genItems(props.children,backwards,offset,false,box.attr('id'));
+			this.genItems(props.children,backwards,offset,false,box);
 			this.container.append(box).append($('<br>'));
-			this.genItems(props.metaChildren,false,connOffset,true,box.attr('id'));
+			this.genItems(props.metaChildren,false,connOffset,true,box);
 			if (arrowText!=null) {
 				this.container.append(arrowText).append($('<br>'));
 			}
@@ -74,53 +75,30 @@ jSplitTree.genItems= function(tree,backwards,parentOffset,isMeta,parentId)
 				this.container.append(arrowText).append($('<br>'));
 			}
 			this.container.append(box).append($('<br>'))
-			this.genItems(props.children,backwards,offset,false,box.attr('id'));
-			this.genItems(props.metaChildren,false,connOffset,true,box.attr('id'));
+			this.genItems(props.children,backwards,offset,false,box);
+			this.genItems(props.metaChildren,false,connOffset,true,box);
 		}
 		//document.write();
 	}
 }
 
-jSplitTree.drawConns = function(container)
+jSplitTree.prototype.drawConns = function(container)
 {
-	var lf=new jLineFactory($(container));
+	var lf=new jLineFactory(container);
 	for(c in this.conns) {
 		var co = this.conns[c];
-		var s = $('#'+co.s);
-		var d = $('#'+co.d); //todo: parentId etc
-		var sOffset=s.offset(), dOffset=d.offset();
-		var h=d.height()+8;
-		var backwards=s!=null && sOffset.top>dOffset.top;
-		var hOffset = co.isMeta ? this.lineWidth/2 : (backwards ? -h/2 : h/2);
+		var sOffset=co.s.offset(), dOffset=co.d.offset();
+		var h=co.d.height()+8;
+		var backwards=co.s!=null && sOffset.top>dOffset.top;
+		var hOffset = co.isMeta ? jSplitTree.lineWidth/2 : (backwards ? -h/2 : h/2);
 		lf.drawCurvedLine(
 			[dOffset.left,dOffset.top+h/2],
 			[[-co.w,0],[0,sOffset.top-dOffset.top+hOffset]],
 			co.props.color,
-			this.lineWidth,
-			this.lineWidth*2,
-			backwards?this.arrowSize:0,
-			backwards?0:this.arrowSize
+			jSplitTree.lineWidth,
+			jSplitTree.lineWidth*2,
+			backwards?jSplitTree.arrowSize:0,
+			backwards?0:jSplitTree.arrowSize
 		 );
 	}
-}
-
-jSplitTree.create = function(jQuertyTarget,splitTree) // splitTree == { 'topTree': , 'root':, 'bottomTree' } 
-{
-	this.instanceCounter++;
-	this.conns=[];
-	this.container=$("<div></div>");
-	this.elemCounter=0;
-	var cid="center"+this.instanceCounter;
-	this.genItems(splitTree.topTree,true,0,false,cid);
-	{
-		var cbox;
-		cbox=this.makeItemBox(splitTree.root);
-		cbox.attr('id',cid);
-		this.container.append(cbox).append($('<br>'));
-	}
-	this.elemCounter=0;
-	this.genItems(splitTree.bottomTree,false,0,false,cid);
-	this.elemCounter=0;
-	jQuertyTarget.append(this.container);
-	this.drawConns(jQuertyTarget);
 }
