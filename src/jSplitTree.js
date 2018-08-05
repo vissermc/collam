@@ -84,7 +84,7 @@ jSplitTree.prototype.genItems= function(tree,backwards,parentOffset,isMeta,paren
 
 jSplitTree.prototype.drawConns = function(container)
 {
-	var lf=new jLineFactory(container);
+	var lf=new LineFactory(container);
 	for(c in this.conns) {
 		var co = this.conns[c];
 		var sOffset=co.s.offset(), dOffset=co.d.offset();
